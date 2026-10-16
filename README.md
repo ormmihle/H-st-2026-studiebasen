@@ -34,6 +34,7 @@ studiebasen/
 │   ├── legg-til-fag.md
 │   ├── stylesheets/      # egne farger (risikomatrise, fagkort)
 │   ├── javascripts/      # oppsett for matteformler
+│   ├── algdat/           # Algoritmer og datastrukturer
 │   └── ttm4185/          # ett fag = én mappe
 │       ├── index.md
 │       ├── del-*.md      # forelesningsnotater
@@ -42,9 +43,21 @@ studiebasen/
 └── site/                 # bygget nettside, holdes utenfor Git
 ```
 
+## Interaktive figurer (AlgDat)
+
+Figurene i AlgDat er React-komponenter i `tools/algwidgets/widgets/*.jsx`. De er ferdig bygget til `docs/javascripts/algwidgets.js`, så du trenger ikke gjøre noe for å bruke dem. React ligger i `docs/javascripts/vendor/`, så figurene virker uten internett.
+
+Endrer du en figur, bygg på nytt (krever Node.js):
+
+```bash
+cd tools/algwidgets
+npm install
+npm run build
+```
+
 ## PDF-er
 
-Forelesninger og eksamensoppgaver er opphavsrettslig beskyttet og ligger derfor ikke i Git. Legg dem i `docs/<fag>/pdf/` med de originale filnavnene, så virker lenkene i notatene. Se `docs/ttm4185/pdf/LES-MEG.txt` for hvilke filer som hører hjemme der.
+Forelesninger og eksamensoppgaver er opphavsrettslig beskyttet og ligger derfor ikke i Git. Legg dem i `docs/<fag>/pdf/` med de originale filnavnene, så virker lenkene i notatene. Se `LES-MEG.txt` i hver `pdf/`-mappe for hvilke filer som hører hjemme der.
 
 ## Legg til et fag
 

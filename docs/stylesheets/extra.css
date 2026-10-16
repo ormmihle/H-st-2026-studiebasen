@@ -29,3 +29,39 @@
 .fagkort > div p { margin: .2rem 0; }
 .fagkort .kode { font-family: var(--md-code-font-family); font-size: .75rem; color: var(--md-default-fg-color--light); }
 .fagkort .tom { border-top-color: var(--md-default-fg-color--lightest); color: var(--md-default-fg-color--light); }
+
+/* Interaktive AlgDat-figurer: fargene figurene bruker, koblet til temaet */
+.algwidget {
+  --cds-text-primary: var(--md-default-fg-color);
+  --cds-text-secondary: var(--md-default-fg-color--light);
+  --cds-chart-axis: var(--md-default-fg-color--lighter);
+  --cds-chart-grid: var(--md-default-fg-color--lightest);
+  --cds-chart-background: var(--md-default-bg-color);
+  --cds-chart-reference-tint: #e8eef0;
+  --cds-chart-categorical-1: #0f7c8a;
+  --cds-chart-categorical-2: #c2410c;
+  --cds-chart-categorical-3: #6d4fc4;
+  --cds-chart-categorical-4: #8a8f3a;
+  --cds-chart-categorical-5: #b4357a;
+  --cds-chart-status-good: #2f8a4a;
+  --cds-chart-status-critical: #c0362c;
+  margin: 1.2rem 0 .3rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: .4rem;
+  padding: .4rem;
+  overflow-x: auto;
+  user-select: none;
+}
+[data-md-color-scheme="slate"] .algwidget {
+  --cds-chart-reference-tint: #2b3a3f;
+  --cds-chart-categorical-1: #4fc3cf;
+  --cds-chart-categorical-2: #f0884e;
+  --cds-chart-categorical-3: #a893f0;
+  --cds-chart-categorical-4: #c4c96a;
+  --cds-chart-categorical-5: #e57bb5;
+  --cds-chart-status-good: #5cc27a;
+  --cds-chart-status-critical: #f0776c;
+}
+.algwidget svg { display: block; width: 100%; min-width: 34rem; height: auto; font-family: var(--md-text-font-family); }
+.algwidget svg g[cursor="pointer"]:hover rect { stroke-width: 2.5; }
+.algwidget-caption { margin-top: 0 !important; font-size: .7rem; color: var(--md-default-fg-color--light); text-align: center; }

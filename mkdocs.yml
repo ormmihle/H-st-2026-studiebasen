@@ -57,6 +57,10 @@ extra_css:
 extra_javascript:
   - javascripts/mathjax.js
   - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
+  - javascripts/vendor/react.production.min.js
+  - javascripts/vendor/react-dom.production.min.js
+  - javascripts/algwidgets.js
+  - javascripts/algwidgets-mount.js
 
 # PDF-ene ligger lokalt og er holdt utenfor Git, så manglende PDF-er skal ikke gi advarsler
 validation:
@@ -77,4 +81,15 @@ nav:
       - Eksamen: ttm4185/eksamen.md
       - Formler og tall: ttm4185/formler.md
       - Begreper: ttm4185/begreper.md
+  - Algoritmer og datastrukturer:
+      - algdat/index.md
+      - Pensum og forelesninger: algdat/pensum.md
+      - Algoritmene:
+          - "1. Sortering ved sammenligning": algdat/1-sortering-sammenligning.md
+          - "2. Sortering i lineær tid": algdat/2-sortering-lineaer-tid.md
+          - "3. Søk og utvalg": algdat/3-sok-og-utvalg.md
+          - "4. Datastrukturer": algdat/4-datastrukturer.md
+          - "5. Dynamisk programmering": algdat/5-dynamisk-programmering.md
+          - "6. Grådige algoritmer": algdat/6-gradige-algoritmer.md
+          - "7. Graftraversering": algdat/7-graftraversering.md
   - Legg til fag: legg-til-fag.md

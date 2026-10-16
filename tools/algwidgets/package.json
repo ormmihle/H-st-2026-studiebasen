@@ -1,0 +1,7 @@
+{
+  "name": "algwidgets",
+  "private": true,
+  "description": "Bygger de interaktive AlgDat-figurene fra JSX til docs/javascripts/algwidgets.js",
+  "scripts": { "build": "node build.mjs ../../docs/javascripts/algwidgets.js" },
+  "devDependencies": { "esbuild": "0.24.0" }
+}

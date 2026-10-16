@@ -1,0 +1,5 @@
+Legg PDF-ene for AlgDat i denne mappen med disse filnavnene,
+så virker lenkene på fagsiden. Mappen holdes utenfor Git.
+
+  AlgDat.pdf        boka (Cormen mfl., Introduction to Algorithms, 4. utg.)
+  Pensumhefte.pdf   pensumheftet

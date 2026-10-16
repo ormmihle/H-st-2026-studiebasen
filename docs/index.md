@@ -13,17 +13,18 @@ Alt studiestoffet mitt på ett sted. Notatene er skrevet i Markdown, og MkDocs g
 Forelesninger del I–V, tre gjesteforelesninger, eksamen 2021 og 2022.
 </div>
 
-<div class="tom" markdown>
-<p class="kode">Neste fag</p>
-**Ikke lagt til ennå**
+<div markdown>
+<p class="kode">AlgDat · høst 2026</p>
+**[Algoritmer og datastrukturer](algdat/index.md)**
 
-Se [Legg til fag](legg-til-fag.md).
+Algoritmene fra F1–F8 med læringsmål, bevis, kjøretid og 19 interaktive figurer.
 </div>
 
 </div>
 
 ## Snarveier
 
-- [Formler og tall](ttm4185/formler.md): tilgjengelighet, nedetid, serie og parallell
+- [Formler og tall TTM4185](ttm4185/formler.md): tilgjengelighet, nedetid, serie og parallell
 - [Begreper](ttm4185/begreper.md): norsk og engelsk side om side
-- [Eksamen](ttm4185/eksamen.md): oppgavetyper og hva som går igjen
+- [Eksamen TTM4185](ttm4185/eksamen.md): oppgavetyper og hva som går igjen
+- [AlgDat-pensum](algdat/pensum.md): alle algoritmene per forelesning, med fremdrift
