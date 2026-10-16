@@ -4,7 +4,9 @@ Mine studienotater som en lokal nettside, bygget med [MkDocs](https://www.mkdocs
 
 ## Kom i gang
 
-Krever Python 3.9 eller nyere.
+**Windows:** dobbeltklikk `start.bat`. Første gang installerer den MkDocs, deretter åpnes siden i nettleseren. Lukk det svarte vinduet for å stoppe siden.
+
+**Manuelt** (krever Python 3.9 eller nyere):
 
 ```bash
 pip install -r requirements.txt
