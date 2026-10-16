@@ -1,0 +1,31 @@
+/* Risikomatrise: farger som fungerer i både lys og mørk modus */
+:root {
+  --risk-green: #c8ead2;
+  --risk-yellow: #f6e7a8;
+  --risk-red: #f3b8b2;
+  --risk-text: #1d2a24;
+}
+[data-md-color-scheme="slate"] {
+  --risk-green: #24533a;
+  --risk-yellow: #6b5a17;
+  --risk-red: #6e2a25;
+  --risk-text: #eef2f0;
+}
+
+.risk-matrix table { text-align: center; font-variant-numeric: tabular-nums; }
+.risk-matrix td, .risk-matrix th { padding: .5em .8em !important; }
+.risk-matrix .g { background: var(--risk-green); color: var(--risk-text); }
+.risk-matrix .y { background: var(--risk-yellow); color: var(--risk-text); }
+.risk-matrix .r { background: var(--risk-red); color: var(--risk-text); }
+
+/* Fagkort på forsiden */
+.fagkort { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .8rem; margin: 1rem 0; }
+.fagkort > div {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-top: 3px solid var(--md-accent-fg-color);
+  border-radius: .3rem;
+  padding: .8rem 1rem;
+}
+.fagkort > div p { margin: .2rem 0; }
+.fagkort .kode { font-family: var(--md-code-font-family); font-size: .75rem; color: var(--md-default-fg-color--light); }
+.fagkort .tom { border-top-color: var(--md-default-fg-color--lightest); color: var(--md-default-fg-color--light); }

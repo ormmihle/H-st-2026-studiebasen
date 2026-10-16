@@ -1,0 +1,26 @@
+Legg PDF-ene for TTM4185 i denne mappen med disse filnavnene,
+så virker lenkene i notatene. Mappen holdes utenfor Git.
+
+Forelesninger
+  2026_lectures_part_I Intro and complex systems-21-101-1.pdf
+  2026_lectures_part_I Intro and complex systems-21-101-2.pdf
+  2026_lectures_part_I Intro and complex systems-21-101-3.pdf
+  2026_lectures_part_I Intro and complex systems-21-101-4.pdf
+  2026_lectures_part_I Intro and complex systems-21-101-5.pdf
+  2026_lectures_part_II Taxonomy-1.pdf
+  2026_lectures_part_III Threats-1.pdf
+  2026_lectures_part_III Threats-2.pdf
+  2026_lectures_part_III Threats-3.pdf
+  2026_lectures_part_V Risk management.pdf
+
+Gjesteforelesninger
+  2026_NKom.pdf
+  2026-Aidon-1.pdf
+  2026-Telenor Cyberpdf.pdf
+  2026-09-28 NTNU TTM4185 - Risk Assessment in Practice - Eivind Høydal.pdf
+
+Eksamen
+  TTM4185 exam 2021.pdf
+  TTM4185 exam 2021 - losningsfoslag.pdf
+  TTM4185 exam 2022.pdf
+  TTM4185 exam 2022 - losningsforslag.pdf

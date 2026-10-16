@@ -1,0 +1,20 @@
+# Bygget nettside (lages på nytt med `mkdocs build`)
+site/
+
+# PDF-er og andre opphavsrettslig beskyttede filer fra forelesninger holdes lokalt
+docs/**/pdf/*
+!docs/**/pdf/LES-MEG.txt
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# MkDocs-cache
+.cache/
+
+# Systemfiler
+.DS_Store
+Thumbs.db
+desktop.ini

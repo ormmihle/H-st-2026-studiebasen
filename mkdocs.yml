@@ -1,0 +1,79 @@
+site_name: Studiebasen
+site_description: Mine notater, forelesninger og eksamensforberedelser samlet på ett sted
+use_directory_urls: false   # gjør at siden også fungerer når du åpner HTML-filene direkte
+
+theme:
+  name: material
+  language: nb
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle: {icon: material/weather-night, name: Bytt til mørk modus}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle: {icon: material/weather-sunny, name: Bytt til lys modus}
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+
+plugins:
+  - search:
+      lang: ["no", "en"]   # søk på både norsk og engelsk (pensum er blandet)
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - tables
+  - toc: {permalink: true}
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed: {alternate_style: true}
+  - pymdownx.tasklist: {custom_checkbox: true}
+  - pymdownx.arithmatex: {generic: true}
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js
+
+# PDF-ene ligger lokalt og er holdt utenfor Git, så manglende PDF-er skal ikke gi advarsler
+validation:
+  links:
+    not_found: info
+
+nav:
+  - Forside: index.md
+  - Sikkerhet og robusthet:
+      - ttm4185/index.md
+      - Forelesninger:
+          - "Del I: Komplekse IKT-systemer": ttm4185/del-1-komplekse-systemer.md
+          - "Del II: Taksonomi": ttm4185/del-2-taksonomi.md
+          - "Del III: Trusler og sårbarheter": ttm4185/del-3-trusler.md
+          - "Del V: Risikostyring": ttm4185/del-5-risikostyring.md
+      - Gjesteforelesninger: ttm4185/gjesteforelesninger.md
+      - Eksamen: ttm4185/eksamen.md
+      - Formler og tall: ttm4185/formler.md
+      - Begreper: ttm4185/begreper.md
+  - Legg til fag: legg-til-fag.md
