@@ -12,8 +12,8 @@
 | Verdier og risikovurdering | Oppg. 1–2 | Oppg. 2, 7a | [Del V](del-5-risikostyring.md) |
 | CIA og sikkerhetsattributter | Oppg. 3–5, 10 | Oppg. 3c | [Del II](del-2-taksonomi.md#sikkerhetsattributter) |
 | Safety mot security | Oppg. 3, 17 | | [Del II](del-2-taksonomi.md#safety) |
-| Trusler mot et system | Oppg. 8–9 | Oppg. 3 (man-in-the-middle) | [Del III](del-3-trusler.md) |
-| Symmetrisk og asymmetrisk kryptografi | Oppg. 10–16 | Oppg. 6 | *Del IV mangler* |
+| Trusler mot et system | Oppg. 8–9 | Oppg. 3 (man-in-the-middle) | [Del III](del-3-trusler.md), [Del IV](del-4-trusler-og-trender.md) |
+| Symmetrisk og asymmetrisk kryptografi | Oppg. 10–16 | Oppg. 6 | *Ikke i opplastet materiale* |
 | Fault–error–failure, feiltoleranse | Oppg. 20 | Oppg. 4 (TCP) | [Del III](del-3-trusler.md#palitelighetsblikket-fault-error-failure) |
 | Pålitelighetsattributter | Oppg. 21 | Oppg. 8–9 | [Del II](del-2-taksonomi.md#dependability) |
 | Asymptotisk og momentan tilgjengelighet | | Oppg. 10 | [Del II](del-2-taksonomi.md#tre-mater-a-male-tilgjengelighet) |

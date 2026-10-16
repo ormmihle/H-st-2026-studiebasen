@@ -1,6 +1,6 @@
 # Gjesteforelesninger
 
-Fire gjesteforelesninger høsten 2026, sortert etter dato.
+Tre gjesteforelesninger høsten 2026, sortert etter dato. Telenor Cyberdefence sin forelesning «Trusler og trender innen IT-sikkerhet» ligger som [del IV](del-4-trusler-og-trender.md).
 
 ## Nkom: sikre og robuste ekomnett (31.08)
 
@@ -49,43 +49,6 @@ Fire gjesteforelesninger høsten 2026, sortert etter dato.
 **Nøkkelhåndtering:** unike nøkler per måler (én hacket måler gir ikke kontroll over andre), nøklene byttes ved installasjon, egne nøkler for daglig drift, firmware-oppdatering og nøkkeloppdatering. Måleren godtar aldri firmware eller kommandoer uten gyldig sertifikat. Integritet sikres med HMAC eller CRC16.
 
 **Fysisk sikring:** forsegling fra fabrikk og hærverksalarm som sendes som «last gasp» selv uten strøm.
-
-## Telenor Cyberdefence: trusler og trender (08.09)
-
-[PDF](pdf/2026-Telenor%20Cyberpdf.pdf)
-
-### Sårbarheter
-
-- **Teknisk alvorlighetsgrad ≠ risiko.** Alvorlighetsgrad (CVSS, 0–10) sier hva sårbarheten gir og hvor lett den er å utnytte. Risiko avhenger i tillegg av verdien til systemet og sannsynligheten for utnyttelse.
-- **Kjente sårbarheter** får et CVE-nummer (f.eks. CVE-2017-0144 / MS17-010). Når de er kjent, er de lette å finne, derfor er patching viktig.
-- **Ukjente (zero-day)** er svært vanskelige å beskytte seg mot: sikkerhetstesting, vulnerability disclosure-program, gode patcherutiner og sikkerhet i lag.
-- Kjente zero-days: Heartbleed (2014), EternalBlue (2017, brukt i WannaCry og NotPetya), Log4Shell (2021), Ivanti EPMM (brukt mot DSS 2023).
-- **AI** gjør det raskere og enklere både å finne og å utnytte sårbarheter.
-
-**Markedet for sårbarheter:**
-
-| Marked | Eksempel | Mål |
-|---|---|---|
-| Hvitt | Bug bounty, responsible disclosure | Feilen fikses |
-| Svart | Lukkede forum, dark web | Innbrudd og tyveri |
-| Grått | Sårbarhetsmeglere, ofte med myndigheter som kunder | Overvåking, offensive operasjoner |
-
-### Angrep
-
-|  | Målrettet | Opportunistisk |
-|---|---|---|
-| **Teknisk** | Vanskelig mot oppdaterte systemer; utnytter feilkonfigurasjon, svak autentisering eller zero-days | Automatiske skannere (f.eks. Shodan) finner sårbare systemer; kryptering, defacement, kryptomining |
-| **Social engineering** | Spear phishing | Phishing |
-
-### Trusselaktører
-
-| Aktør | Motiv | Eksempel |
-|---|---|---|
-| Innsidere | Fordel, hevn | Misfornøyde eller tidligere ansatte |
-| Thrill seekers | Omdømme, nysgjerrighet | «Script kiddies», bruker nå mye AI |
-| Hacktivister | Ideologi | Anonymous, Server Killers (DDoS mot Norge 2026) |
-| Cyberkriminelle | Vinning | FIN7 (spear phishing, ransomware) |
-| Statlige aktører | Politikk, spionasje | Lazarus (WannaCry, Sony), APT28 (Stortinget 2020, demning i Norge 2025) |
 
 ## Eivind Høydal: risikovurdering i praksis (28.09)
 

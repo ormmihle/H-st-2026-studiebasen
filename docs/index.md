@@ -10,7 +10,7 @@ Alt studiestoffet mitt på ett sted. Notatene er skrevet i Markdown, og MkDocs g
 <p class="kode">TTM4185 · høst 2026</p>
 **[Sikkerhet og robusthet i IKT-systemer](ttm4185/index.md)**
 
-Forelesninger del I–III og V, fire gjesteforelesninger, eksamen 2021 og 2022.
+Forelesninger del I–V, tre gjesteforelesninger, eksamen 2021 og 2022.
 </div>
 
 <div class="tom" markdown>
