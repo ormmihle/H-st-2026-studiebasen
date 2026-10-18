@@ -92,6 +92,11 @@ nav:
           - "5. Dynamisk programmering": algdat/5-dynamisk-programmering.md
           - "6. Grådige algoritmer": algdat/6-gradige-algoritmer.md
           - "7. Graftraversering": algdat/7-graftraversering.md
+          - "8. Minimale spenntrær": algdat/8-minimale-spenntraer.md
+          - "9. Korteste vei fra én til alle": algdat/9-korteste-vei-en-til-alle.md
+          - "10. Korteste vei fra alle til alle": algdat/10-korteste-vei-alle-til-alle.md
+          - "11. Maksimal flyt": algdat/11-maksimal-flyt.md
+          - "12. NP-kompletthet": algdat/12-np-kompletthet.md
   - Ex.phil.:
       - exphil/index.md
       - "Vitenskap, teknologi og samfunn":

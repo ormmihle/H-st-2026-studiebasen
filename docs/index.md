@@ -17,7 +17,7 @@ Forelesninger del I–V, tre gjesteforelesninger, eksamen 2021 og 2022.
 <p class="kode">AlgDat · høst 2026</p>
 **[Algoritmer og datastrukturer](algdat/index.md)**
 
-Algoritmene fra F1–F8 med læringsmål, bevis, kjøretid og 19 interaktive figurer.
+Hele pensum F1–F14 med læringsmål, bevis, kjøretid og 31 interaktive figurer.
 </div>
 
 <div markdown>

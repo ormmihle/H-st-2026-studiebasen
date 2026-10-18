@@ -3,3 +3,4 @@ så virker lenkene på fagsiden. Mappen holdes utenfor Git.
 
   AlgDat.pdf        boka (Cormen mfl., Introduction to Algorithms, 4. utg.)
   Pensumhefte.pdf   pensumheftet
+  forelesn09_kort.pdf  lysarkene fra forelesning 9 (kortversjon)

@@ -1,4 +1,146 @@
 window.AlgWidgets = window.AlgWidgets || {};
+window.AlgLib = (function(){ const C = {
+  ink: "var(--cds-text-primary)",
+  quiet: "var(--cds-text-secondary)",
+  edge: "var(--cds-chart-axis)",
+  tint: "var(--cds-chart-reference-tint)",
+  accent: "var(--cds-chart-categorical-1)",
+  cmp: "var(--cds-chart-categorical-2)",
+  purple: "var(--cds-chart-categorical-3)",
+  olive: "var(--cds-chart-categorical-4)",
+  pink: "var(--cds-chart-categorical-5)",
+  good: "var(--cds-chart-status-good)",
+  bad: "var(--cds-chart-status-critical)"
+};
+const PALETTE = [C.accent, C.cmp, C.purple, C.olive, C.pink, C.good, C.bad];
+function wrap(text, max) {
+  const words = String(text).split(" ");
+  const lines = [];
+  let cur = "";
+  words.forEach((w) => {
+    if (cur.length > 0 && cur.length + 1 + w.length > max) {
+      lines.push(cur);
+      cur = w;
+    } else {
+      cur = cur.length > 0 ? `${cur} ${w}` : w;
+    }
+  });
+  if (cur.length > 0) lines.push(cur);
+  return lines;
+}
+function Para({ x, y, text, max = 112, fill = C.ink, size = 13, lh = 18, weight }) {
+  const lines = wrap(text, max);
+  return /* @__PURE__ */ React.createElement("text", { x, y, fill, fontSize: size, fontWeight: weight }, lines.map((l, i) => /* @__PURE__ */ React.createElement("tspan", { key: i, x, dy: i === 0 ? 0 : lh }, l)));
+}
+function Button({ x, y, w, label, onClick, disabled, primary }) {
+  return /* @__PURE__ */ React.createElement("g", { onClick: disabled ? void 0 : onClick, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.4 : 1 }, /* @__PURE__ */ React.createElement(
+    "rect",
+    {
+      x,
+      y,
+      width: w,
+      height: "32",
+      rx: "8",
+      fill: primary ? C.accent : "none",
+      fillOpacity: primary ? 0.12 : 0,
+      stroke: primary ? C.accent : C.edge,
+      strokeWidth: primary ? 2 : 1.25
+    }
+  ), /* @__PURE__ */ React.createElement("text", { x: x + w / 2, y: y + 21, textAnchor: "middle", fontWeight: primary ? 600 : 400, fill: C.ink }, label));
+}
+function Controls({ s, N, setS, y = 68, jump, jumpLabel = "Hele runden \u23ED", steps }) {
+  const go = (d) => setS(Math.max(0, Math.min(N - 1, s + d)));
+  const doJump = () => {
+    let t = Math.min(s + 1, N - 1);
+    while (t < N - 1 && !jump(steps.at(t))) t += 1;
+    setS(t);
+  };
+  let x = 24;
+  const out = [];
+  out.push(/* @__PURE__ */ React.createElement(Button, { key: "b", x, y, w: 104, label: "\u25C0 Tilbake", onClick: () => go(-1), disabled: s === 0 }));
+  x += 112;
+  out.push(/* @__PURE__ */ React.createElement(Button, { key: "n", x, y, w: 104, label: "Neste \u25B6", onClick: () => go(1), disabled: s === N - 1, primary: true }));
+  x += 112;
+  if (jump) {
+    out.push(/* @__PURE__ */ React.createElement(Button, { key: "j", x, y, w: 124, label: jumpLabel, onClick: doJump, disabled: s === N - 1 }));
+    x += 132;
+  }
+  out.push(/* @__PURE__ */ React.createElement(Button, { key: "r", x, y, w: 86, label: "Til start", onClick: () => setS(0) }));
+  x += 100;
+  out.push(/* @__PURE__ */ React.createElement("text", { key: "t", x, y: y + 21, fontSize: "12", fill: C.quiet }, `Steg ${s + 1} av ${N}`));
+  return /* @__PURE__ */ React.createElement("g", null, out);
+}
+function Title({ title, subtitle }) {
+  return /* @__PURE__ */ React.createElement("g", null, /* @__PURE__ */ React.createElement("text", { x: "24", y: "30", fontSize: "15", fontWeight: "600", fill: C.ink }, title), /* @__PURE__ */ React.createElement("text", { x: "24", y: "50", fontSize: "12", fill: C.quiet }, subtitle));
+}
+function Explain({ y, a, b, max = 112 }) {
+  const la = wrap(a || "", max), lb = wrap(b || "", max);
+  return /* @__PURE__ */ React.createElement("g", null, /* @__PURE__ */ React.createElement("text", { x: "24", y, fill: C.ink, fontSize: "13" }, la.map((l, i) => /* @__PURE__ */ React.createElement("tspan", { key: i, x: "24", dy: i === 0 ? 0 : 18 }, l))), /* @__PURE__ */ React.createElement("text", { x: "24", y: y + la.length * 18 + 4, fill: C.quiet, fontSize: "13" }, lb.map((l, i) => /* @__PURE__ */ React.createElement("tspan", { key: i, x: "24", dy: i === 0 ? 0 : 18 }, l))));
+}
+function seg(p, q, r1 = 20, r2 = 20) {
+  const dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+  return [p[0] + ux * r1, p[1] + uy * r1, q[0] - ux * r2, q[1] - uy * r2];
+}
+function Edge({ p, q, directed, label, color = C.edge, width = 1.25, bend = 0, r = 20, dash, labelColor, labelWeight, labelOffset = 0, labelT = 0.5 }) {
+  const g = seg(p, q, r, r + (directed ? 2 : 0));
+  const mx = (g[0] + g[2]) / 2, my = (g[1] + g[3]) / 2;
+  const tx0 = g[0] + (g[2] - g[0]) * labelT, ty0 = g[1] + (g[3] - g[1]) * labelT;
+  const dx = g[2] - g[0], dy = g[3] - g[1], L = Math.hypot(dx, dy);
+  const nx = -dy / L, ny = dx / L;
+  const cx = mx + nx * bend, cy = my + ny * bend;
+  const d = bend === 0 ? `M${g[0]},${g[1]} L${g[2]},${g[3]}` : `M${g[0]},${g[1]} Q${cx},${cy} ${g[2]},${g[3]}`;
+  let head = null;
+  if (directed) {
+    const tx = bend === 0 ? dx / L : g[2] - cx, ty = bend === 0 ? dy / L : g[3] - cy;
+    const tl = Math.hypot(tx, ty), ax = tx / tl, ay = ty / tl;
+    const hx = g[2], hy = g[3], s = 9;
+    head = /* @__PURE__ */ React.createElement("path", { d: `M${hx},${hy} L${hx - ax * s - ay * s * 0.5},${hy - ay * s + ax * s * 0.5} L${hx - ax * s + ay * s * 0.5},${hy - ay * s - ax * s * 0.5} Z`, fill: color });
+  }
+  const lx = bend === 0 ? tx0 + nx * (12 + labelOffset) : mx + nx * (bend * 0.5 + 12 * Math.sign(bend) + labelOffset);
+  const ly = bend === 0 ? ty0 + ny * (12 + labelOffset) : my + ny * (bend * 0.5 + 12 * Math.sign(bend) + labelOffset);
+  return /* @__PURE__ */ React.createElement("g", null, /* @__PURE__ */ React.createElement("path", { d, fill: "none", stroke: color, strokeWidth: width, strokeDasharray: dash }), head, label !== void 0 && label !== null ? /* @__PURE__ */ React.createElement("g", null, /* @__PURE__ */ React.createElement("rect", { x: lx - 4 - String(label).length * 3.6, y: ly - 9, width: 8 + String(label).length * 7.2, height: "16", rx: "3", fill: "var(--cds-chart-background)", fillOpacity: "0.85" }), /* @__PURE__ */ React.createElement("text", { x: lx, y: ly + 4, textAnchor: "middle", fontSize: "12", fill: labelColor || C.ink, fontWeight: labelWeight }, label)) : null);
+}
+function Node({ x, y, label, r = 20, fill = "none", fillOpacity = 0, stroke = C.edge, strokeWidth = 1.25, textFill = C.ink, sub, subDy = -28, subFill = C.quiet }) {
+  return /* @__PURE__ */ React.createElement("g", null, /* @__PURE__ */ React.createElement("circle", { cx: x, cy: y, r, fill, fillOpacity, stroke, strokeWidth }), /* @__PURE__ */ React.createElement("text", { x, y: y + 5, textAnchor: "middle", fontSize: "14", fontWeight: "600", fill: textFill }, label), sub !== void 0 && sub !== null ? /* @__PURE__ */ React.createElement("text", { x, y: y + subDy, textAnchor: "middle", fontSize: "12", fill: subFill }, sub) : null);
+}
+function Pseudo({ x, y, lines, active = [], lh = 17, w = 300, size = 12 }) {
+  return /* @__PURE__ */ React.createElement("g", null, lines.map((l, i) => {
+    const n = parseInt(l, 10);
+    const on = !Number.isNaN(n) && active.includes(n);
+    return /* @__PURE__ */ React.createElement("g", { key: i }, on ? /* @__PURE__ */ React.createElement("rect", { x: x - 4, y: y + i * lh - 12, width: w, height: lh, rx: "3", fill: C.accent, fillOpacity: "0.16" }) : null, /* @__PURE__ */ React.createElement(
+      "text",
+      {
+        x,
+        y: y + i * lh,
+        fontSize: size,
+        fill: i === 0 ? C.ink : on ? C.ink : C.quiet,
+        fontWeight: i === 0 || on ? 600 : 400,
+        fontFamily: "var(--md-code-font-family, monospace)",
+        style: { whiteSpace: "pre" }
+      },
+      l
+    ));
+  }));
+}
+function Matrix({ x, y, data, label, hl = /* @__PURE__ */ new Map(), cw = 34, ch = 22, rowLabels, colLabels, size = 12 }) {
+  const n = data.length, m = data[0].length;
+  return /* @__PURE__ */ React.createElement("g", null, /* @__PURE__ */ React.createElement("text", { x, y: y - 10, fontSize: "12", fontWeight: "600", fill: C.ink }, label), colLabels ? colLabels.map((c, j) => /* @__PURE__ */ React.createElement("text", { key: `c${j}`, x: x + 22 + j * cw + cw / 2, y: y + 4, textAnchor: "middle", fontSize: "11", fill: C.quiet }, c)) : null, data.map((row, i) => /* @__PURE__ */ React.createElement("g", { key: i }, rowLabels ? /* @__PURE__ */ React.createElement("text", { x: x + 10, y: y + 10 + (i + 1) * ch - 6, textAnchor: "middle", fontSize: "11", fill: C.quiet }, rowLabels[i]) : null, row.map((v, j) => {
+    const k = `${i},${j}`, c = hl.get(k);
+    return /* @__PURE__ */ React.createElement("g", { key: j }, /* @__PURE__ */ React.createElement("rect", { x: x + 22 + j * cw, y: y + 10 + i * ch, width: cw, height: ch, fill: c || "none", fillOpacity: c ? 0.2 : 0, stroke: C.edge, strokeWidth: "0.75" }), /* @__PURE__ */ React.createElement("text", { x: x + 22 + j * cw + cw / 2, y: y + 10 + i * ch + 15, textAnchor: "middle", fontSize: size, fill: C.ink, fontWeight: c ? 600 : 400 }, v));
+  }))));
+}
+function Legend({ x, y, items }) {
+  let cx = x;
+  return /* @__PURE__ */ React.createElement("g", null, items.map((it, i) => {
+    const el = /* @__PURE__ */ React.createElement("g", { key: i }, it.line ? /* @__PURE__ */ React.createElement("line", { x1: cx, y1: y - 4, x2: cx + 18, y2: y - 4, stroke: it.color, strokeWidth: it.width || 3, strokeDasharray: it.dash }) : /* @__PURE__ */ React.createElement("circle", { cx: cx + 7, cy: y - 4, r: "7", fill: it.color, fillOpacity: it.opacity === void 0 ? 0.25 : it.opacity, stroke: it.stroke || C.edge }), /* @__PURE__ */ React.createElement("text", { x: cx + 24, y, fontSize: "12", fill: C.quiet }, it.label));
+    cx += 30 + it.label.length * 6.6;
+    return el;
+  }));
+}
+const INF = "\u221E";
+const fmt = (v) => v === Infinity ? INF : v === -Infinity ? "\u2212\u221E" : String(v).replace("-", "\u2212");
+return { C, PALETTE, wrap, Para, Button, Controls, Title, Explain, seg, Edge, Node, Pseudo, Matrix, Legend, INF, fmt };
+ })();
 window.AlgWidgets["activity-selection"] = (function(){ return () => {
   const [s, setS] = React.useState(0);
   const ink = "var(--cds-text-primary)", quiet = "var(--cds-text-secondary)", edge = "var(--cds-chart-axis)", grid = "var(--cds-chart-grid)", accent = "var(--cds-chart-categorical-1)", cmpc = "var(--cds-chart-categorical-2)", good = "var(--cds-chart-status-good)", bad = "var(--cds-chart-status-critical)";
@@ -31,6 +173,80 @@ window.AlgWidgets["activity-selection"] = (function(){ return () => {
     const col = ch ? good : cur ? cmpc : rj ? bad : edge;
     return /* @__PURE__ */ React.createElement("g", { key: `a${i}` }, /* @__PURE__ */ React.createElement("text", { x: "24", y: ry(i) + 14, fontSize: "12", fontWeight: cur ? 600 : 400, fill: ink }, `a${i}`), /* @__PURE__ */ React.createElement("text", { x: "60", y: ry(i) + 14, fontSize: "11.5", fill: quiet }, `[${S.at(i - 1)}, ${F.at(i - 1)})`), /* @__PURE__ */ React.createElement("rect", { x: tx(S.at(i - 1)), y: ry(i) + 2, width: (F.at(i - 1) - S.at(i - 1)) * 35, height: "16", rx: "4", fill: col, fillOpacity: fut ? 0.06 : rj ? 0.12 : 0.25, stroke: col, strokeWidth: cur || ch ? 2 : 1, strokeDasharray: rj ? "3 3" : "none" }));
   })), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "legend" }, /* @__PURE__ */ React.createElement("rect", { x: "140", y: "398", width: "16", height: "12", fill: good, fillOpacity: "0.25", stroke: good, strokeWidth: "2" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "leg-chosen", x: "162", y: "408", fontSize: "12", fill: quiet }, "valgt"), /* @__PURE__ */ React.createElement("rect", { x: "220", y: "398", width: "16", height: "12", fill: bad, fillOpacity: "0.12", stroke: bad, strokeWidth: "1", strokeDasharray: "3 3" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "leg-rej", x: "242", y: "408", fontSize: "12", fill: quiet }, "forkastet"), /* @__PURE__ */ React.createElement("rect", { x: "316", y: "398", width: "16", height: "12", fill: cmpc, fillOpacity: "0.25", stroke: cmpc, strokeWidth: "2" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "leg-cur", x: "338", y: "408", fontSize: "12", fill: quiet }, "vurderes n\xE5"), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "leg-line", x: "440", y: "408", fontSize: "12", fill: quiet }, "stiplet linje: sluttid for sist valgte")), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "explanation" }, /* @__PURE__ */ React.createElement("text", { x: "24", y: "438", fill: ink }, st.a), /* @__PURE__ */ React.createElement("text", { x: "24", y: "460", fill: quiet }, st.b)));
+};
+ })();
+window.AlgWidgets["bellman-ford"] = (function(){ const { C, Controls, Title, Explain, Node, Edge, Pseudo, fmt } = window.AlgLib;
+const V = ["s", "t", "x", "y", "z"];
+const P = /* @__PURE__ */ new Map([["s", [70, 250]], ["t", [220, 160]], ["x", [420, 160]], ["y", [220, 340]], ["z", [420, 340]]]);
+const E = [["t", "x", 5, 14], ["t", "y", 8, 0], ["t", "z", -4, 0, 0.25], ["x", "t", -2, 14], ["y", "x", -3, 0, 0.25], ["y", "z", 9, 0], ["z", "x", 7, 0], ["z", "s", 2, 40], ["s", "t", 6, 0], ["s", "y", 7, 0]];
+const CODE = [
+  "BELLMAN-FORD(G, w, s)",
+  "1  INITIALIZE-SINGLE-SOURCE(G, s)",
+  "2  for i = 1 to |G.V| \u2212 1",
+  "3    for each edge (u, v) \u2208 G.E",
+  "4      RELAX(u, v, w)",
+  "5  for each edge (u, v) \u2208 G.E",
+  "6    if v.d > u.d + w(u, v)",
+  "7      return FALSE",
+  "8  return TRUE"
+];
+function buildSteps() {
+  const d = new Map(V.map((v) => [v, Infinity])), pi = new Map(V.map((v) => [v, null])), out = [];
+  d.set("s", 0);
+  const snap = (o) => out.push({ cur: -1, pass: 0, changed: null, endPass: false, ...o, d: new Map(d), pi: new Map(pi) });
+  snap({ code: [1], a: "Linje 1: INITIALIZE-SINGLE-SOURCE gir s.d = 0 og v.d = \u221E, v.\u03C0 = NIL for alle andre.", b: "Kantene relakseres i rekkef\xF8lgen (t,x), (t,y), (t,z), (x,t), (y,x), (y,z), (z,x), (z,s), (s,t), (s,y), som i boka." });
+  for (let i = 1; i <= V.length - 1; i += 1) {
+    E.forEach(([u, v, w], k) => {
+      const before = d.get(v), cand = d.get(u) + w;
+      let a, b, changed = null;
+      if (cand < before) {
+        d.set(v, cand);
+        pi.set(v, u);
+        changed = v;
+        a = `Runde ${i}: RELAX(${u}, ${v}): ${v}.d = ${fmt(before)} > ${u}.d + w = ${fmt(d.get(u))} + ${fmt(w)} = ${fmt(cand)}, s\xE5 ${v}.d = ${fmt(cand)} og ${v}.\u03C0 = ${u}.`;
+        b = "Estimatet blir bedre. Det er aldri lavere enn den sanne avstanden \u03B4(s, v) (\xF8vre grense-egenskapen).";
+      } else {
+        a = `Runde ${i}: RELAX(${u}, ${v}): ${v}.d = ${fmt(before)} \u2264 ${u}.d + w = ${fmt(d.get(u))} + ${fmt(w)} = ${fmt(cand)}, ingen endring.`;
+        b = d.get(u) === Infinity ? `${u}.d er \u221E, s\xE5 kanten kan ikke forbedre noe enn\xE5.` : "Kanten gir ingen kortere vei til v.";
+      }
+      const endPass = k === E.length - 1;
+      if (endPass) b += ` Etter runde ${i} er alle korteste veier med h\xF8yst ${i} kanter funnet.`;
+      snap({ cur: k, pass: i, changed, endPass, code: changed ? [2, 3, 4] : [2, 3, 4], a, b });
+    });
+  }
+  snap({
+    code: [5, 6, 8],
+    end: true,
+    a: "Linje 5\u20138: ingen kant har v.d > u.d + w(u, v), s\xE5 det finnes ingen negativ sykel som kan n\xE5s fra s. Returnerer TRUE.",
+    b: "d-verdiene er de korteste avstandene: s 0, t 2, x 4, y 7, z \u22122. De bl\xE5 kantene er korteste-vei-treet."
+  });
+  return out;
+}
+const STEPS = buildSteps();
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = STEPS.length, st = STEPS.at(s);
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 520", role: "img", "aria-label": "Bellman-Ford steg for steg", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "Bellman-Ford steg for steg", subtitle: "Grafen fra bokas figur 22.4 med kilde s; tallet i noden er v.d" }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS, steps: STEPS, jump: (x) => x.endPass || x.end }), E.map(([u, v, w, bend, lt], k) => {
+    const cur = k === st.cur, tree = st.pi.get(v) === u;
+    return /* @__PURE__ */ React.createElement(
+      Edge,
+      {
+        key: k,
+        p: P.get(u),
+        q: P.get(v),
+        directed: true,
+        bend,
+        r: 24,
+        label: fmt(w),
+        labelT: lt || 0.5,
+        color: cur ? C.cmp : tree ? C.accent : C.edge,
+        width: cur || tree ? 3 : 1.25
+      }
+    );
+  }), V.map((v) => {
+    const [x, y] = P.get(v), ch = v === st.changed;
+    return /* @__PURE__ */ React.createElement("g", { key: v }, /* @__PURE__ */ React.createElement(Node, { x, y, r: 24, label: fmt(st.d.get(v)), stroke: ch ? C.good : C.edge, strokeWidth: ch ? 3 : 1.25, fill: ch ? C.good : "none", fillOpacity: ch ? 0.15 : 0 }), /* @__PURE__ */ React.createElement("text", { x, y: y + (y < 200 ? -32 : 44), textAnchor: "middle", fontSize: "13", fontWeight: "600", fill: C.quiet }, v));
+  }), /* @__PURE__ */ React.createElement(Pseudo, { x: 500, y: 150, lines: CODE, active: st.code, w: 252 }), /* @__PURE__ */ React.createElement("text", { x: "500", y: "330", fontSize: "12", fill: C.quiet }, st.pass > 0 ? `Runde i = ${st.pass} av ${V.length - 1}` : st.end ? "Sjekk for negative sykler" : "Initialisering"), /* @__PURE__ */ React.createElement("text", { x: "500", y: "352", fontSize: "12", fill: C.quiet }, `\u03C0: ${V.filter((v) => st.pi.get(v)).map((v) => `${v}.\u03C0 = ${st.pi.get(v)}`).join(", ") || "alle NIL"}`), /* @__PURE__ */ React.createElement(Explain, { y: 430, a: st.a, b: st.b }));
 };
  })();
 window.AlgWidgets["bfs"] = (function(){ return () => {
@@ -89,6 +305,94 @@ window.AlgWidgets["bfs"] = (function(){ return () => {
     const p = P.get(v), c = st.col.get(v), cur = v === st.u, nw = st.disc.includes(v), dv = st.d.get(v);
     return /* @__PURE__ */ React.createElement("g", { key: v }, /* @__PURE__ */ React.createElement("circle", { cx: p.at(0), cy: p.at(1), r: "22", fill: c === "b" ? ink : c === "g" ? grayc : "none", fillOpacity: c === "b" ? 0.75 : c === "g" ? 0.28 : 0, stroke: cur ? accent : nw ? good : edge, strokeWidth: cur || nw ? 3 : 1.25 }), /* @__PURE__ */ React.createElement("text", { x: p.at(0), y: p.at(1) + 5, textAnchor: "middle", fontSize: "14", fontWeight: "600", fill: c === "b" ? "var(--cds-chart-reference-tint)" : ink }, v), /* @__PURE__ */ React.createElement("text", { x: p.at(0), y: p.at(1) + (p.at(1) < 200 ? -30 : 40), textAnchor: "middle", fontSize: "12", fill: quiet }, dv >= 0 ? `d = ${dv}` : "d = \u221E"));
   })), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "queue" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "q-label", x: "24", y: "372", fontSize: "12", fill: quiet }, "Q (FIFO-k\xF8), hodet f\xF8rst:"), st.Q.map((q, k) => /* @__PURE__ */ React.createElement("g", { key: `q${k}` }, /* @__PURE__ */ React.createElement("rect", { x: 190 + k * 46, y: "354", width: "40", height: "28", rx: "4", fill: grayc, fillOpacity: "0.28", stroke: edge, strokeWidth: "1" }), /* @__PURE__ */ React.createElement("text", { x: 210 + k * 46, y: "373", textAnchor: "middle", fontWeight: "600", fill: ink }, q))), /* @__PURE__ */ React.createElement("circle", { cx: "520", cy: "368", r: "7", fill: "none", stroke: edge, strokeWidth: "1.25" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "leg-white", x: "532", y: "372", fontSize: "12", fill: quiet }, "hvit"), /* @__PURE__ */ React.createElement("circle", { cx: "580", cy: "368", r: "7", fill: grayc, fillOpacity: "0.28", stroke: edge, strokeWidth: "1.25" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "leg-gray", x: "592", y: "372", fontSize: "12", fill: quiet }, "gr\xE5"), /* @__PURE__ */ React.createElement("circle", { cx: "636", cy: "368", r: "7", fill: ink, fillOpacity: "0.75", stroke: edge, strokeWidth: "1.25" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "leg-black", x: "648", y: "372", fontSize: "12", fill: quiet }, "svart")), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "explanation" }, /* @__PURE__ */ React.createElement("text", { x: "24", y: "426", fill: ink }, st.a), /* @__PURE__ */ React.createElement("text", { x: "24", y: "448", fill: quiet }, st.b)));
+};
+ })();
+window.AlgWidgets["bipartite-matching"] = (function(){ const { C, Controls, Title, Explain, Node, Edge } = window.AlgLib;
+const L = ["l1", "l2", "l3", "l4", "l5"], R = ["r1", "r2", "r3", "r4"];
+const LBL = { s: "s", t: "t", l1: "l\u2081", l2: "l\u2082", l3: "l\u2083", l4: "l\u2084", l5: "l\u2085", r1: "r\u2081", r2: "r\u2082", r3: "r\u2083", r4: "r\u2084" };
+const P = { s: [50, 270], t: [500, 270] };
+L.forEach((v, i) => {
+  P[v] = [190, 170 + i * 50];
+});
+R.forEach((v, i) => {
+  P[v] = [360, 195 + i * 50];
+});
+const G = [["l1", "r1"], ["l1", "r2"], ["l2", "r1"], ["l3", "r2"], ["l3", "r3"], ["l3", "r4"], ["l4", "r3"], ["l5", "r3"]];
+const E = L.map((l) => ["s", l]).concat(G, R.map((r) => [r, "t"]));
+const ORDER = ["s", ...L, ...R, "t"];
+function buildSteps() {
+  const f = new Map(E.map(([u, v]) => [`${u}|${v}`, 0])), out = [];
+  const res = () => {
+    const r = [];
+    E.forEach(([u, v]) => {
+      if (f.get(`${u}|${v}`) === 0) r.push([u, v, false]);
+      else r.push([v, u, true]);
+    });
+    return r;
+  };
+  out.push({
+    f: new Map(f),
+    path: [],
+    a: "Flytnettet G\u2032: en kilde s med kant til hver node i L, en kant fra hver node i R til sluket t, og kantene i G rettet fra L til R. Alle kapasiteter er 1.",
+    b: "Heltallsteoremet: Ford-Fulkerson gir en heltallig maks flyt, s\xE5 hver kant f\xE5r flyt 0 eller 1. Kantene fra L til R med flyt 1 er en matching."
+  });
+  let it = 0;
+  for (; ; ) {
+    const r = res(), pi = /* @__PURE__ */ new Map([["s", null]]), queue = ["s"];
+    while (queue.length) {
+      const u = queue.shift();
+      ORDER.forEach((v) => {
+        if (!pi.has(v) && r.some((e) => e[0] === u && e[1] === v)) {
+          pi.set(v, u);
+          queue.push(v);
+        }
+      });
+    }
+    if (!pi.has("t")) {
+      const m = G.filter(([u, v]) => f.get(`${u}|${v}`) === 1);
+      out.push({
+        f: new Map(f),
+        path: [],
+        done: true,
+        a: `Ingen for\xF8kende sti finnes. Maks flyt er ${m.length}, og matchingen er {${m.map(([u, v]) => `(${LBL[u]}, ${LBL[v]})`).join(", ")}}.`,
+        b: "l\u2084 og l\u2085 har bare r\u2083 som nabo, s\xE5 de kan ikke begge matches. En matching med 5 kanter er umulig."
+      });
+      break;
+    }
+    const path = ["t"];
+    while (path.at(0) !== "s") path.unshift(pi.get(path.at(0)));
+    it += 1;
+    const back = [];
+    path.slice(1).forEach((v, i) => {
+      const u = path[i];
+      if (f.has(`${u}|${v}`) && f.get(`${u}|${v}`) === 0) f.set(`${u}|${v}`, 1);
+      else {
+        f.set(`${v}|${u}`, 0);
+        back.push(`(${LBL[v]}, ${LBL[u]})`);
+      }
+    });
+    out.push({
+      f: new Map(f),
+      path,
+      a: `Iterasjon ${it}: BFS finner ${path.map((x) => LBL[x]).join(" \u2192 ")}, og flyten \xF8ker med 1.`,
+      b: back.length ? `Stien g\xE5r baklengs langs ${back.join(" og ")}, s\xE5 de kantene tas ut av matchingen, mens nye kanter legges inn. Matchingen vokser likevel med \xE9n.` : "Stien g\xE5r bare forlengs, s\xE5 \xE9n ny kant fra L til R kommer med i matchingen."
+    });
+  }
+  return out;
+}
+const STEPS = buildSteps();
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = STEPS.length, st = STEPS.at(s);
+  const onPath = (u, v) => {
+    const i = st.path.indexOf(u);
+    return i >= 0 && (st.path.at(i + 1) === v || st.path.at(i - 1) === v && i > 0);
+  };
+  const matched = G.filter(([u, v]) => st.f.get(`${u}|${v}`) === 1);
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 520", role: "img", "aria-label": "Maksimum bipartitt matching med maks flyt", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "Maksimum bipartitt matching med maks flyt", subtitle: "Edmonds-Karp p\xE5 flytnettet G\u2032; alle kanter har kapasitet 1" }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS }), E.map(([u, v], k) => {
+    const fl = st.f.get(`${u}|${v}`), pth = onPath(u, v);
+    return /* @__PURE__ */ React.createElement(Edge, { key: k, p: P[u], q: P[v], directed: true, r: 17, color: pth ? C.cmp : fl ? C.accent : C.edge, width: pth ? 3 : fl ? 3 : 1.1, dash: pth && !fl ? "6 4" : void 0 });
+  }), Object.keys(P).map((v) => /* @__PURE__ */ React.createElement(Node, { key: v, x: P[v][0], y: P[v][1], r: 17, label: LBL[v], stroke: st.path.includes(v) ? C.cmp : C.edge, strokeWidth: st.path.includes(v) ? 2.5 : 1.25 })), /* @__PURE__ */ React.createElement("text", { x: "190", y: "140", textAnchor: "middle", fontSize: "12", fill: C.quiet }, "L"), /* @__PURE__ */ React.createElement("text", { x: "360", y: "140", textAnchor: "middle", fontSize: "12", fill: C.quiet }, "R"), /* @__PURE__ */ React.createElement("text", { x: "560", y: "170", fontSize: "12", fontWeight: "600", fill: C.ink }, `Matching (${matched.length} kanter)`), matched.map(([u, v], k) => /* @__PURE__ */ React.createElement("text", { key: k, x: "560", y: 194 + k * 20, fontSize: "13", fill: C.accent, fontWeight: "600" }, `${LBL[u]} \u2013 ${LBL[v]}`)), /* @__PURE__ */ React.createElement("text", { x: "24", y: "414", fontSize: "12", fill: C.quiet }, "Bl\xE5 = flyt 1 (i matchingen eller brukt av s/t). Oransje = for\xF8kende sti; stiplet oransje = kanten ble g\xE5tt baklengs og er tatt ut."), /* @__PURE__ */ React.createElement(Explain, { y: 448, a: st.a, b: st.b }));
 };
  })();
 window.AlgWidgets["bisect"] = (function(){ return () => {
@@ -234,6 +538,78 @@ window.AlgWidgets["bucket-sort"] = (function(){ return () => {
   return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 520", role: "img", "aria-label": "Bucket-Sort steg for steg", fontSize: "13" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "title", x: "24", y: "30", fontSize: "15", fontWeight: "600", fill: ink }, "Bucket-Sort steg for steg"), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "subtitle", x: "24", y: "50", fontSize: "12", fill: quiet }, "Fordel i b\xF8tter, sorter hver b\xF8tte, sett sammen"), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "btn-back", onClick: () => go(-1), cursor: "pointer", opacity: s === 0 ? 0.4 : 1 }, /* @__PURE__ */ React.createElement("rect", { x: "24", y: "68", width: "110", height: "32", rx: "8", fill: "none", stroke: edge, strokeWidth: "1.25" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "btn-back-label", x: "79", y: "89", textAnchor: "middle", fill: ink }, "\u25C0 Tilbake")), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "btn-next", onClick: () => go(1), cursor: "pointer", opacity: s === N - 1 ? 0.4 : 1 }, /* @__PURE__ */ React.createElement("rect", { x: "146", y: "68", width: "110", height: "32", rx: "8", fill: accent, fillOpacity: "0.12", stroke: accent, strokeWidth: "2" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "btn-next-label", x: "201", y: "89", textAnchor: "middle", fontWeight: "600", fill: ink }, "Neste \u25B6")), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "btn-reset", onClick: () => setS(0), cursor: "pointer" }, /* @__PURE__ */ React.createElement("rect", { x: "268", y: "68", width: "90", height: "32", rx: "8", fill: "none", stroke: edge, strokeWidth: "1.25" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "btn-reset-label", x: "313", y: "89", textAnchor: "middle", fill: ink }, "Til start")), /* @__PURE__ */ React.createElement("text", { x: "376", y: "89", fontSize: "12", fill: quiet }, `Steg ${s + 1} av ${N}`), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "array-a" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "a-label", x: "24", y: "141", fontWeight: "600", fill: ink }, "A"), A.map((v, c) => /* @__PURE__ */ React.createElement("g", { key: `a${c}` }, /* @__PURE__ */ React.createElement("rect", { x: cx(c) - 26, y: "120", width: "52", height: "32", fill: st.phase >= 2 && (c < st.ia || st.phase > 2) ? tint : "none", stroke: c === st.ia ? cmpc : edge, strokeWidth: c === st.ia ? 2 : 1 }), /* @__PURE__ */ React.createElement("text", { x: cx(c), y: "141", textAnchor: "middle", fontWeight: c === st.ia ? 600 : 400, fill: ink }, f(v)), /* @__PURE__ */ React.createElement("text", { x: cx(c), y: "168", textAnchor: "middle", fontSize: "11.5", fill: quiet }, c + 1)))), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "buckets" }, st.B.map((l, i) => /* @__PURE__ */ React.createElement("g", { key: `b${i}` }, /* @__PURE__ */ React.createElement("rect", { x: "24", y: by(i) - 15, width: "712", height: "21", rx: "4", fill: i === st.bi ? accent : "none", fillOpacity: i === st.bi ? 0.12 : 0 }), /* @__PURE__ */ React.createElement("text", { x: "30", y: by(i), fontSize: "12", fontWeight: "600", fill: ink }, `B[${i}]`), /* @__PURE__ */ React.createElement("text", { x: "72", y: by(i), fontSize: "11.5", fill: quiet }, `[.${i}, ${i === 9 ? "1" : "." + (i + 1)})`), l.map((v, t) => /* @__PURE__ */ React.createElement("g", { key: t }, /* @__PURE__ */ React.createElement("rect", { x: 140 + t * 60, y: by(i) - 14, width: "52", height: "19", rx: "9", fill: tint, stroke: edge, strokeWidth: "1" }), /* @__PURE__ */ React.createElement("text", { x: 166 + t * 60, y: by(i), textAnchor: "middle", fontSize: "12", fill: ink }, f(v))))))), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "output" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "out-label", x: "24", y: "452", fontWeight: "600", fill: ink }, "Ut"), st.res.map((v, c) => /* @__PURE__ */ React.createElement("g", { key: `o${c}` }, /* @__PURE__ */ React.createElement("rect", { x: cx(c) - 26, y: "431", width: "52", height: "32", fill: tint, stroke: accent, strokeWidth: "1.25" }), /* @__PURE__ */ React.createElement("text", { x: cx(c), y: "452", textAnchor: "middle", fill: ink }, f(v))))), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "explanation" }, /* @__PURE__ */ React.createElement("text", { x: "24", y: "490", fill: ink }, st.a), /* @__PURE__ */ React.createElement("text", { x: "24", y: "510", fill: quiet }, st.b)));
 };
  })();
+window.AlgWidgets["clique-reduction"] = (function(){ const { C, Controls, Title, Explain, Node, PALETTE } = window.AlgLib;
+const VS = [
+  [1, 1, false, 230, 170],
+  [1, 2, true, 310, 170],
+  [1, 3, true, 390, 170],
+  [2, 1, true, 120, 240],
+  [2, 2, false, 120, 300],
+  [2, 3, false, 120, 360],
+  [3, 1, false, 500, 240],
+  [3, 2, false, 500, 300],
+  [3, 3, false, 500, 360]
+];
+const SUB = ["", "\u2081", "\u2082", "\u2083"];
+const lit = (v) => `${v[2] ? "\xAC" : ""}x${SUB[v[1]]}`;
+const EDGES = [];
+VS.forEach((a, i) => VS.forEach((b, j) => {
+  if (i < j && a[0] !== b[0] && !(a[1] === b[1] && a[2] !== b[2])) EDGES.push([i, j]);
+}));
+const CLIQUE = [1, 5, 8];
+const STEPS = [
+  {
+    show: "nodes",
+    a: "Formelen \u03C6 har k = 3 klausuler. Lag \xE9n node per literal i hver klausul, gruppert per klausul (C\u2081 \xF8verst, C\u2082 til venstre, C\u2083 til h\xF8yre).",
+    b: "M\xE5let er en graf G og et tall k slik at \u03C6 er tilfredsstillbar hvis og bare hvis G har en klikk med k noder."
+  },
+  {
+    show: "edges",
+    a: `Legg inn en kant mellom to noder hvis de er i ulike klausuler og literalene er konsistente, alts\xE5 ikke x og \xACx. Her gir det ${EDGES.length} kanter.`,
+    b: "Ingen kanter innenfor en klausul, og ingen mellom en variabel og dens negasjon. Konstruksjonen tar polynomisk tid."
+  },
+  {
+    show: "edges",
+    missing: [0, 3],
+    a: "Eksempel p\xE5 en manglende kant: x\u2081 i C\u2081 og \xACx\u2081 i C\u2082. Begge kan ikke v\xE6re sanne samtidig.",
+    b: "Derfor beskriver enhver klikk en tilordning uten selvmotsigelser."
+  },
+  {
+    show: "clique",
+    a: "\u03C6 er tilfredsstillbar med x\u2082 = 0 og x\u2083 = 1 (x\u2081 kan v\xE6re hva som helst). Velg \xE9n sann literal per klausul: \xACx\u2082 fra C\u2081, x\u2083 fra C\u2082 og x\u2083 fra C\u2083.",
+    b: "De tre nodene er i ulike klausuler og er alle sanne, s\xE5 ingen par er hverandres negasjon. Alle tre kantene finnes: en klikk med k = 3 noder."
+  },
+  {
+    show: "clique",
+    a: "Motsatt: en klikk med k noder m\xE5 ha \xE9n node fra hver klausul (ingen kanter innenfor en klausul). Sett hver valgt literal sann.",
+    b: "Det g\xE5r, fordi klikken ikke inneholder b\xE5de x og \xACx. Da har hver klausul en sann literal, s\xE5 \u03C6 er sann. Dermed er CLIQUE NP-hard, og siden den er i NP, NP-komplett."
+  }
+];
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = STEPS.length, st = STEPS[s];
+  const inC = (i) => st.show === "clique" && CLIQUE.includes(i);
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 520", role: "img", "aria-label": "Reduksjon fra 3-CNF-SAT til CLIQUE", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "3-CNF-SAT \u2264p CLIQUE", subtitle: "\u03C6 = (x\u2081 \u2228 \xACx\u2082 \u2228 \xACx\u2083) \u2227 (\xACx\u2081 \u2228 x\u2082 \u2228 x\u2083) \u2227 (x\u2081 \u2228 x\u2082 \u2228 x\u2083), som i bokas figur 34.14" }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS }), st.show !== "nodes" ? EDGES.map(([i, j], k) => {
+    const a = VS[i], b = VS[j], on = inC(i) && inC(j);
+    return /* @__PURE__ */ React.createElement("line", { key: k, x1: a[3], y1: a[4], x2: b[3], y2: b[4], stroke: on ? C.good : C.edge, strokeWidth: on ? 3.5 : 0.9, opacity: st.show === "clique" && !on ? 0.35 : 1 });
+  }) : null, st.missing ? /* @__PURE__ */ React.createElement("line", { x1: VS[st.missing[0]][3], y1: VS[st.missing[0]][4], x2: VS[st.missing[1]][3], y2: VS[st.missing[1]][4], stroke: C.bad, strokeWidth: "2.5", strokeDasharray: "6 5" }) : null, VS.map((v, i) => {
+    const col = PALETTE[v[0] - 1], on = inC(i) || st.missing && st.missing.includes(i);
+    return /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("circle", { cx: v[3], cy: v[4], r: "22", fill: "var(--cds-chart-background)" }), /* @__PURE__ */ React.createElement(
+      Node,
+      {
+        x: v[3],
+        y: v[4],
+        r: 22,
+        label: lit(v),
+        fill: col,
+        fillOpacity: inC(i) ? 0.45 : 0.15,
+        stroke: on ? inC(i) ? C.good : C.bad : col,
+        strokeWidth: on ? 3 : 1.5
+      }
+    ));
+  }), /* @__PURE__ */ React.createElement("text", { x: "310", y: "132", textAnchor: "middle", fontSize: "12", fontWeight: "600", fill: PALETTE[0] }, "C\u2081"), /* @__PURE__ */ React.createElement("text", { x: "72", y: "305", textAnchor: "middle", fontSize: "12", fontWeight: "600", fill: PALETTE[1] }, "C\u2082"), /* @__PURE__ */ React.createElement("text", { x: "548", y: "305", textAnchor: "middle", fontSize: "12", fontWeight: "600", fill: PALETTE[2] }, "C\u2083"), /* @__PURE__ */ React.createElement("text", { x: "600", y: "180", fontSize: "12", fill: C.quiet }, "Kantregel:"), /* @__PURE__ */ React.createElement("text", { x: "600", y: "200", fontSize: "12", fill: C.quiet }, "ulike klausuler og"), /* @__PURE__ */ React.createElement("text", { x: "600", y: "218", fontSize: "12", fill: C.quiet }, "ikke x mot \xACx"), /* @__PURE__ */ React.createElement("text", { x: "600", y: "256", fontSize: "12", fill: C.quiet }, "k = antall klausuler"), /* @__PURE__ */ React.createElement(Explain, { y: 440, a: st.a, b: st.b }));
+};
+ })();
 window.AlgWidgets["counting-sort"] = (function(){ return () => {
   const [s, setS] = React.useState(0);
   const ink = "var(--cds-text-primary)", quiet = "var(--cds-text-secondary)", edge = "var(--cds-chart-axis)", tint = "var(--cds-chart-reference-tint)", accent = "var(--cds-chart-categorical-1)", cmpc = "var(--cds-chart-categorical-2)";
@@ -266,6 +642,85 @@ window.AlgWidgets["counting-sort"] = (function(){ return () => {
   const go = (d) => setS(Math.max(0, Math.min(N - 1, s + d)));
   const ph = (k) => /* @__PURE__ */ React.createElement("rect", { x: "496", y: 110 + k * 30, width: "240", height: "24", rx: "4", fill: accent, fillOpacity: st.phase === k ? 0.18 : 0 });
   return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 414", role: "img", "aria-label": "Counting-Sort steg for steg", fontSize: "13" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "title", x: "24", y: "30", fontSize: "15", fontWeight: "600", fill: ink }, "Counting-Sort steg for steg"), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "subtitle", x: "24", y: "50", fontSize: "12", fill: quiet }, "Hvert trykk p\xE5 Neste utf\xF8rer \xE9n iterasjon av en av l\xF8kkene"), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "btn-back", onClick: () => go(-1), cursor: "pointer", opacity: s === 0 ? 0.4 : 1 }, /* @__PURE__ */ React.createElement("rect", { x: "24", y: "68", width: "110", height: "32", rx: "8", fill: "none", stroke: edge, strokeWidth: "1.25" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "btn-back-label", x: "79", y: "89", textAnchor: "middle", fill: ink }, "\u25C0 Tilbake")), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "btn-next", onClick: () => go(1), cursor: "pointer", opacity: s === N - 1 ? 0.4 : 1 }, /* @__PURE__ */ React.createElement("rect", { x: "146", y: "68", width: "110", height: "32", rx: "8", fill: accent, fillOpacity: "0.12", stroke: accent, strokeWidth: "2" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "btn-next-label", x: "201", y: "89", textAnchor: "middle", fontWeight: "600", fill: ink }, "Neste \u25B6")), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "btn-reset", onClick: () => setS(0), cursor: "pointer" }, /* @__PURE__ */ React.createElement("rect", { x: "268", y: "68", width: "90", height: "32", rx: "8", fill: "none", stroke: edge, strokeWidth: "1.25" }), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "btn-reset-label", x: "313", y: "89", textAnchor: "middle", fill: ink }, "Til start")), /* @__PURE__ */ React.createElement("text", { x: "376", y: "89", fontSize: "12", fill: quiet }, `Steg ${s + 1} av ${N}`), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "array-a" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "a-label", x: "24", y: "157", fontWeight: "600", fill: ink }, "A"), A.map((v, c) => /* @__PURE__ */ React.createElement("g", { key: `a${c}` }, /* @__PURE__ */ React.createElement("rect", { x: cx(c) - 22, y: "132", width: "44", height: "40", fill: "none", stroke: c === st.ja ? cmpc : edge, strokeWidth: c === st.ja ? 2 : 1 }), /* @__PURE__ */ React.createElement("text", { x: cx(c), y: "157", textAnchor: "middle", fontWeight: c === st.ja ? 600 : 400, fill: ink }, v), /* @__PURE__ */ React.createElement("text", { x: cx(c), y: "188", textAnchor: "middle", fontSize: "11.5", fill: quiet }, c + 1)))), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "array-c" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "c-label", x: "24", y: "233", fontWeight: "600", fill: ink }, "C"), st.C.map((v, c) => /* @__PURE__ */ React.createElement("g", { key: `c${c}` }, /* @__PURE__ */ React.createElement("rect", { x: cx(c) - 22, y: "208", width: "44", height: "40", fill: c === st.ci ? accent : "none", fillOpacity: c === st.ci ? 0.15 : 1, stroke: c === st.ci ? accent : edge, strokeWidth: c === st.ci ? 2 : 1 }), /* @__PURE__ */ React.createElement("text", { x: cx(c), y: "233", textAnchor: "middle", fontWeight: c === st.ci ? 600 : 400, fill: ink }, v), /* @__PURE__ */ React.createElement("text", { x: cx(c), y: "264", textAnchor: "middle", fontSize: "11.5", fill: quiet }, c)))), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "array-b" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "b-label", x: "24", y: "309", fontWeight: "600", fill: ink }, "B"), st.B.map((v, c) => /* @__PURE__ */ React.createElement("g", { key: `b${c}` }, /* @__PURE__ */ React.createElement("rect", { x: cx(c) - 22, y: "284", width: "44", height: "40", fill: v !== null ? tint : "none", stroke: c === st.bw ? accent : edge, strokeWidth: c === st.bw ? 2 : 1 }), /* @__PURE__ */ React.createElement("text", { x: cx(c), y: "303", textAnchor: "middle", fontWeight: c === st.bw ? 600 : 400, fill: ink }, v !== null ? v : ""), /* @__PURE__ */ React.createElement("text", { x: cx(c), y: "318", textAnchor: "middle", fontSize: "10.5", fill: quiet }, st.src.at(c) !== null ? `A[${st.src.at(c)}]` : ""), /* @__PURE__ */ React.createElement("text", { x: cx(c), y: "340", textAnchor: "middle", fontSize: "11.5", fill: quiet }, c + 1)))), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "phases" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "phase-title", x: "496", y: "100", fontSize: "12", fill: quiet }, "Faser i Counting-Sort(A, n, k)"), ph(1), ph(2), ph(3), ph(4), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "phase-1", x: "506", y: "127", fontSize: "12", fill: ink }, "Linje 1\u20133: nullstill C"), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "phase-2", x: "506", y: "157", fontSize: "12", fill: ink }, "Linje 4\u20135: tell forekomster"), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "phase-3", x: "506", y: "187", fontSize: "12", fill: ink }, "Linje 7\u20138: prefikssummer"), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "phase-4", x: "506", y: "217", fontSize: "12", fill: ink }, "Linje 11\u201313: plasser bakfra")), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "explanation" }, /* @__PURE__ */ React.createElement("text", { x: "24", y: "374", fill: ink }, st.a), /* @__PURE__ */ React.createElement("text", { x: "24", y: "396", fill: quiet }, st.b)));
+};
+ })();
+window.AlgWidgets["dag-shortest-paths"] = (function(){ const { C, Controls, Title, Explain, Node, Edge, Pseudo, fmt } = window.AlgLib;
+const V = ["r", "s", "t", "x", "y", "z"];
+const P = new Map(V.map((v, i) => [v, [50 + i * 86, 250]]));
+const E = [["r", "s", 5, 0], ["r", "t", 3, -110], ["s", "t", 2, 0], ["s", "x", 6, 110], ["t", "x", 7, 0], ["t", "y", 4, -110], ["t", "z", 2, 150], ["x", "y", -1, 0], ["x", "z", 1, -110], ["y", "z", -2, 0]];
+const Adj = new Map(V.map((v) => [v, E.filter((e) => e[0] === v)]));
+const CODE = [
+  "DAG-SHORTEST-PATHS(G, w, s)",
+  "1  sorter G topologisk",
+  "2  INIT-SINGLE-SOURCE(G, s)",
+  "3  for hver u, topologisk",
+  "4    for each v in G.Adj[u]",
+  "5      RELAX(u, v, w)"
+];
+function buildSteps() {
+  const d = new Map(V.map((v) => [v, Infinity])), pi = new Map(V.map((v) => [v, null])), out = [];
+  d.set("s", 0);
+  const snap = (o) => out.push({ u: null, upd: [], ...o, d: new Map(d), pi: new Map(pi) });
+  snap({ code: [1, 2], a: "Linje 1\u20132: nodene er topologisk sortert fra venstre mot h\xF8yre. s.d = 0, alle andre har d = \u221E.", b: "Alle kanter g\xE5r mot h\xF8yre, s\xE5 n\xE5r vi kommer til en node, er alle kanter inn til den allerede relaksert." });
+  V.forEach((u) => {
+    const upd = [];
+    Adj.get(u).forEach(([, v, w]) => {
+      if (d.get(u) + w < d.get(v)) {
+        upd.push(`${v}.d = ${fmt(d.get(u) + w)}`);
+        d.set(v, d.get(u) + w);
+        pi.set(v, u);
+      }
+    });
+    const none = Adj.get(u).length === 0;
+    snap({
+      u,
+      upd: upd.map((x) => x.at(0)),
+      code: [3, 4, 5],
+      a: `Linje 3\u20135: u = ${u} (${u}.d = ${fmt(d.get(u))}). ${none ? "Ingen utkanter." : `Kantene ut fra ${u} relakseres.`}`,
+      b: upd.length ? `Forbedret: ${upd.join(", ")}.` : d.get(u) === Infinity ? `${u} kan ikke n\xE5s fra s, s\xE5 ingenting endres.` : "Ingen forbedringer."
+    });
+  });
+  out.at(-1).b += " Ferdig: r \u221E, s 0, t 2, x 6, y 5, z 3. Hver kant ble relaksert n\xF8yaktig \xE9n gang.";
+  return out;
+}
+const STEPS = buildSteps();
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = STEPS.length, st = STEPS.at(s);
+  const done = (v) => st.u !== null && V.indexOf(v) <= V.indexOf(st.u);
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 520", role: "img", "aria-label": "Dag-Shortest-Paths steg for steg", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "Dag-Shortest-Paths steg for steg", subtitle: "Grafen fra bokas figur 22.5 med kilde s; tallet i noden er v.d" }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS }), E.map(([u, v, w, bend], k) => {
+    const tree = st.pi.get(v) === u, out = u === st.u;
+    return /* @__PURE__ */ React.createElement(
+      Edge,
+      {
+        key: k,
+        p: P.get(u),
+        q: P.get(v),
+        directed: true,
+        bend,
+        r: 24,
+        label: fmt(w),
+        color: tree ? C.accent : out ? C.cmp : C.edge,
+        width: tree ? 3 : out ? 2 : 1.25
+      }
+    );
+  }), V.map((v) => {
+    const [x, y] = P.get(v), cur = v === st.u, up = st.upd.includes(v), dn = done(v);
+    return /* @__PURE__ */ React.createElement("g", { key: v }, /* @__PURE__ */ React.createElement(
+      Node,
+      {
+        x,
+        y,
+        r: 24,
+        label: fmt(st.d.get(v)),
+        fill: dn ? C.ink : "none",
+        fillOpacity: dn ? 0.75 : 0,
+        textFill: dn ? "var(--cds-chart-reference-tint)" : C.ink,
+        stroke: cur ? C.accent : up ? C.good : C.edge,
+        strokeWidth: cur || up ? 3 : 1.25
+      }
+    ), /* @__PURE__ */ React.createElement("text", { x, y: y - 32, textAnchor: "middle", fontSize: "13", fontWeight: "600", fill: C.quiet }, v));
+  }), /* @__PURE__ */ React.createElement(Pseudo, { x: 540, y: 150, lines: CODE, active: st.code, w: 214, size: 11 }), /* @__PURE__ */ React.createElement("text", { x: "24", y: "410", fontSize: "12", fill: C.quiet }, "Svart node = behandlet. Bl\xE5 kant = korteste-vei-treet (v.\u03C0, v). Oransje = kantene som relakseres n\xE5."), /* @__PURE__ */ React.createElement(Explain, { y: 446, a: st.a, b: st.b }));
 };
  })();
 window.AlgWidgets["dfs"] = (function(){ return () => {
@@ -337,6 +792,473 @@ window.AlgWidgets["dfs"] = (function(){ return () => {
     const has = st.d.has(v), d0 = st.d.get(v), f0 = st.f.has(v) ? st.f.get(v) : st.time;
     return /* @__PURE__ */ React.createElement("g", { key: `b${v}` }, /* @__PURE__ */ React.createElement("text", { x: "528", y: 156 + k * 25, textAnchor: "middle", fontSize: "12", fontWeight: "600", fill: ink }, v), has ? /* @__PURE__ */ React.createElement("rect", { x: tx(d0) - 4, y: 145 + k * 25, width: Math.max(8, tx(f0) - tx(d0) + 8), height: "16", rx: "8", fill: st.f.has(v) ? edge : grayc, fillOpacity: st.f.has(v) ? 0.35 : 0.4, stroke: v === st.cur ? accent : "none", strokeWidth: "2" }) : null);
   })), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "parens" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "paren-label", x: "24", y: "372", fontSize: "12", fill: quiet }, "Parentesstruktur:"), /* @__PURE__ */ React.createElement("text", { x: "130", y: "372", fontSize: "13", fontWeight: "600", fill: ink }, st.paren)), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "legend" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "leg-t", x: "24", y: "398", fontSize: "12", fontWeight: "600", fill: accent }, "T trekant"), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "leg-b", x: "110", y: "398", fontSize: "12", fontWeight: "600", fill: bk }, "B bakoverkant"), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "leg-f", x: "226", y: "398", fontSize: "12", fontWeight: "600", fill: fw }, "F foroverkant"), /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "leg-c", x: "336", y: "398", fontSize: "12", fontWeight: "600", fill: cr }, "C krysskant")), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "explanation" }, /* @__PURE__ */ React.createElement("text", { x: "24", y: "436", fill: ink }, st.a), /* @__PURE__ */ React.createElement("text", { x: "24", y: "458", fill: quiet }, st.b)));
+};
+ })();
+window.AlgWidgets["dijkstra"] = (function(){ const { C, Controls, Title, Explain, Node, Edge, Pseudo, fmt } = window.AlgLib;
+const V = ["s", "t", "x", "y", "z"];
+const P = /* @__PURE__ */ new Map([["s", [70, 250]], ["t", [220, 160]], ["x", [420, 160]], ["y", [220, 340]], ["z", [420, 340]]]);
+const E = [["s", "t", 10, 0], ["s", "y", 5, 0], ["t", "x", 1, 0], ["t", "y", 2, 14], ["y", "t", 3, 14], ["x", "z", 4, 14], ["z", "x", 6, 14], ["y", "x", 9, 0], ["y", "z", 2, 0], ["z", "s", 7, 40]];
+const Adj = new Map(V.map((v) => [v, E.filter((e) => e[0] === v)]));
+const CODE = [
+  "DIJKSTRA(G, w, s)",
+  " 6  while Q \u2260 \u2205",
+  " 7    u = EXTRACT-MIN(Q)",
+  " 8    S = S \u222A {u}",
+  " 9    for each v in G.Adj[u]",
+  "10      RELAX(u, v, w)",
+  "11      if RELAX senket v.d",
+  "12        DECREASE-KEY(Q, v, v.d)"
+];
+function buildSteps() {
+  const d = new Map(V.map((v) => [v, Infinity])), pi = new Map(V.map((v) => [v, null])), S = /* @__PURE__ */ new Set(), out = [];
+  d.set("s", 0);
+  const snap = (o) => out.push({ u: null, upd: [], ...o, d: new Map(d), pi: new Map(pi), S: new Set(S) });
+  snap({ code: [], a: "Linje 1\u20135: s.d = 0, alle andre har d = \u221E. S = \u2205, og alle nodene legges i min-prioritetsk\xF8en Q med d som n\xF8kkel.", b: "S er nodene der d allerede er riktig. Krever at ingen kanter har negativ vekt." });
+  while (S.size < V.length) {
+    const u = V.filter((v) => !S.has(v)).sort((a, b) => d.get(a) - d.get(b) || a.localeCompare(b)).at(0);
+    S.add(u);
+    const upd = [];
+    Adj.get(u).forEach(([, v, w]) => {
+      if (d.get(u) + w < d.get(v)) {
+        upd.push(`${v}: ${fmt(d.get(v))} \u2192 ${d.get(u) + w}`);
+        d.set(v, d.get(u) + w);
+        pi.set(v, u);
+      }
+    });
+    snap({
+      u,
+      upd: upd.map((x) => x.at(0)),
+      code: [7, 8, 9, 10].concat(upd.length ? [11, 12] : []),
+      a: `Linje 7\u20138: EXTRACT-MIN gir ${u} med ${u}.d = ${d.get(u)}, som legges i S. ${u}.d er n\xE5 endelig.`,
+      b: upd.length ? `Linje 9\u201312: kantene ut fra ${u} relakseres, og ${upd.join(", ")}.` : `Linje 9\u201312: kantene ut fra ${u} relakseres, men ingen gir kortere vei.`
+    });
+  }
+  out.at(-1).b += " Ferdig: s 0, t 8, x 9, y 5, z 7.";
+  return out;
+}
+const STEPS = buildSteps();
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = STEPS.length, st = STEPS.at(s);
+  const Qs = V.filter((v) => !st.S.has(v)).sort((a, b) => st.d.get(a) - st.d.get(b) || a.localeCompare(b));
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 520", role: "img", "aria-label": "Dijkstra steg for steg", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "Dijkstra steg for steg", subtitle: "Grafen fra bokas figur 22.6 med kilde s; tallet i noden er v.d" }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS }), E.map(([u, v, w, bend], k) => {
+    const tree = st.pi.get(v) === u, out = u === st.u;
+    return /* @__PURE__ */ React.createElement(
+      Edge,
+      {
+        key: k,
+        p: P.get(u),
+        q: P.get(v),
+        directed: true,
+        bend,
+        r: 24,
+        label: w,
+        color: tree ? C.accent : out ? C.cmp : C.edge,
+        width: tree ? 3 : out ? 2 : 1.25
+      }
+    );
+  }), V.map((v) => {
+    const [x, y] = P.get(v), inS = st.S.has(v), cur = v === st.u, up = st.upd.includes(v);
+    return /* @__PURE__ */ React.createElement("g", { key: v }, /* @__PURE__ */ React.createElement(
+      Node,
+      {
+        x,
+        y,
+        r: 24,
+        label: fmt(st.d.get(v)),
+        fill: inS ? C.ink : "none",
+        fillOpacity: inS ? 0.75 : 0,
+        textFill: inS ? "var(--cds-chart-reference-tint)" : C.ink,
+        stroke: cur ? C.accent : up ? C.good : C.edge,
+        strokeWidth: cur || up ? 3 : 1.25
+      }
+    ), /* @__PURE__ */ React.createElement("text", { x, y: y + (y < 200 ? -32 : 44), textAnchor: "middle", fontSize: "13", fontWeight: "600", fill: C.quiet }, v));
+  }), /* @__PURE__ */ React.createElement(Pseudo, { x: 500, y: 150, lines: CODE, active: st.code, w: 252 }), /* @__PURE__ */ React.createElement("text", { x: "500", y: "312", fontSize: "12", fill: C.quiet }, "Q sortert p\xE5 d (minst f\xF8rst)"), Qs.map((v, k) => /* @__PURE__ */ React.createElement("g", { key: `q${k}` }, /* @__PURE__ */ React.createElement("rect", { x: 500 + k * 50, y: "322", width: "46", height: "28", rx: "4", fill: "none", stroke: C.edge }), /* @__PURE__ */ React.createElement("text", { x: 523 + k * 50, y: "341", textAnchor: "middle", fontSize: "12", fill: C.ink }, `${v}:${fmt(st.d.get(v))}`))), /* @__PURE__ */ React.createElement("text", { x: "500", y: "372", fontSize: "12", fill: C.quiet }, `S = {${[...st.S].join(", ")}}  (svarte noder)`), /* @__PURE__ */ React.createElement(Explain, { y: 430, a: st.a, b: st.b }));
+};
+ })();
+window.AlgWidgets["disjoint-sets"] = (function(){ const { C, Controls, Title, Explain, Node, Pseudo, Edge } = window.AlgLib;
+const ELEMS = ["a", "b", "c", "d", "e", "f", "g", "h"];
+const LINK_CODE = [
+  "LINK(x, y)",
+  "1  if x.rank > y.rank",
+  "2      y.p = x",
+  "3  else x.p = y",
+  "4      if x.rank == y.rank",
+  "5          y.rank = y.rank + 1"
+];
+const FIND_CODE = [
+  "FIND-SET(x)",
+  "1  if x \u2260 x.p",
+  "2      x.p = FIND-SET(x.p)",
+  "3  return x.p"
+];
+const FIND = (n) => n + 10;
+function buildSteps() {
+  const p = /* @__PURE__ */ new Map(), rank = /* @__PURE__ */ new Map(), out = [];
+  const snap = (o) => out.push({ hl: [], path: [], code: [], ...o, p: new Map(p), rank: new Map(rank) });
+  ELEMS.forEach((x) => {
+    p.set(x, x);
+    rank.set(x, 0);
+  });
+  snap({ a: "MAKE-SET for hver av a\u2013h: hvert element er sin egen mengde, med x.p = x og x.rank = 0.", b: "Hver mengde er et tre. Roten er representanten og peker p\xE5 seg selv." });
+  const findPath = (x) => {
+    const path = [x];
+    while (p.get(path.at(-1)) !== path.at(-1)) path.push(p.get(path.at(-1)));
+    return path;
+  };
+  const find = (x, label) => {
+    const path = findPath(x), root = path.at(-1);
+    const changed = path.slice(0, -1).filter((v) => p.get(v) !== root);
+    path.slice(0, -1).forEach((v) => p.set(v, root));
+    snap({
+      hl: [x, root],
+      path,
+      code: [FIND(1), FIND(2), FIND(3)],
+      a: `${label}FIND-SET(${x}) g\xE5r stien ${path.join(" \u2192 ")} og returnerer roten ${root}.`,
+      b: changed.length > 0 ? `Stikomprimering: ${changed.join(", ")} peker n\xE5 rett p\xE5 ${root}. Rangene endres ikke, s\xE5 rang er bare en \xF8vre grense for h\xF8yden.` : "Ingen noder \xE5 komprimere: alle p\xE5 stien peker allerede p\xE5 roten."
+    });
+    return root;
+  };
+  const link = (x, y) => {
+    if (rank.get(x) > rank.get(y)) {
+      p.set(y, x);
+      snap({ hl: [x, y], code: [1, 2], a: `LINK(${x}, ${y}): ${x}.rank = ${rank.get(x)} > ${y}.rank = ${rank.get(y)}, s\xE5 ${y} henges under ${x}.`, b: "Union by rank: roten med lavest rang blir barn. Da vokser ikke h\xF8yden." });
+    } else {
+      p.set(x, y);
+      const eq = rank.get(x) === rank.get(y);
+      if (eq) rank.set(y, rank.get(y) + 1);
+      snap({
+        hl: [x, y],
+        code: eq ? [1, 3, 4, 5] : [1, 3],
+        a: `LINK(${x}, ${y}): ${x}.rank = ${rank.get(x)} ${eq ? "=" : "<"} ${y}.rank${eq ? " f\xF8r \xF8kningen" : ` = ${rank.get(y)}`}, s\xE5 ${x} henges under ${y}${eq ? `, og ${y}.rank \xF8ker til ${rank.get(y)}` : ""}.`,
+        b: eq ? "Like ranger: det nye treet kan bli \xE9n h\xF8yere, s\xE5 rangen til den nye roten \xF8kes." : "Den laveste rangen henges under, s\xE5 rangen til roten er uendret."
+      });
+    }
+  };
+  const union = (x, y, simple) => {
+    if (simple) {
+      link(x, y);
+      out.at(-1).a = `UNION(${x}, ${y}) = LINK(FIND-SET(${x}), FIND-SET(${y})) = ${out.at(-1).a}`;
+      return;
+    }
+    const rx = find(x, `UNION(${x}, ${y}), del 1: `);
+    const ry = find(y, `UNION(${x}, ${y}), del 2: `);
+    link(rx, ry);
+  };
+  union("a", "b", true);
+  union("c", "d", true);
+  union("a", "c");
+  union("e", "f", true);
+  union("g", "h", true);
+  union("e", "g");
+  union("a", "e");
+  find("b", "");
+  out.at(-1).b += " Neste FIND-SET(b) tar bare ett steg.";
+  find("c", "");
+  return out;
+}
+function layout(p) {
+  const kids = new Map(ELEMS.map((x) => [x, []]));
+  const roots = [];
+  ELEMS.forEach((x) => {
+    if (p.get(x) === x) roots.push(x);
+    else kids.get(p.get(x)).push(x);
+  });
+  const width = (x) => kids.get(x).length === 0 ? 1 : kids.get(x).reduce((s, c) => s + width(c), 0);
+  const pos = /* @__PURE__ */ new Map();
+  const place = (x, left2, depth) => {
+    const w = width(x);
+    pos.set(x, [left2 + w * 54 / 2, 200 + depth * 64]);
+    let l = left2;
+    kids.get(x).forEach((c) => {
+      place(c, l, depth + 1);
+      l += width(c) * 54;
+    });
+  };
+  let left = 30;
+  roots.forEach((r) => {
+    place(r, left, 0);
+    left += width(r) * 54 + 6;
+  });
+  return pos;
+}
+const STEPS = buildSteps();
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = STEPS.length, st = STEPS.at(s);
+  const pos = layout(st.p);
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 520", role: "img", "aria-label": "Disjunkte mengder steg for steg", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "Disjunkte mengder som skog", subtitle: "Union by rank og stikomprimering; tallet ved hver node er rangen" }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS }), /* @__PURE__ */ React.createElement("text", { x: "24", y: "140", fontSize: "12", fill: C.quiet }, "Pilene er foreldrepekere x.p. R\xF8ttene (med l\xF8kke) er representantene."), ELEMS.filter((x) => st.p.get(x) !== x).map((x) => {
+    const onPath = st.path.includes(x);
+    return /* @__PURE__ */ React.createElement(Edge, { key: `e${x}`, p: pos.get(x), q: pos.get(st.p.get(x)), directed: true, color: onPath ? C.cmp : C.edge, width: onPath ? 2.5 : 1.25 });
+  }), ELEMS.filter((x) => st.p.get(x) === x).map((x) => {
+    const [cx, cy] = pos.get(x);
+    return /* @__PURE__ */ React.createElement("path", { key: `l${x}`, d: `M${cx - 8},${cy - 18} C${cx - 16},${cy - 48} ${cx + 16},${cy - 48} ${cx + 8},${cy - 18}`, fill: "none", stroke: C.edge, strokeWidth: "1.25" });
+  }), ELEMS.map((x) => {
+    const [cx, cy] = pos.get(x), on = st.hl.includes(x), root = st.p.get(x) === x;
+    return /* @__PURE__ */ React.createElement("g", { key: x }, /* @__PURE__ */ React.createElement(Node, { x: cx, y: cy, label: x, fill: root ? C.accent : "none", fillOpacity: root ? 0.15 : 0, stroke: on ? C.cmp : C.edge, strokeWidth: on ? 3 : 1.25 }), /* @__PURE__ */ React.createElement("text", { x: cx + 23, y: cy + 4, fontSize: "11", fill: C.quiet }, st.rank.get(x)));
+  }), /* @__PURE__ */ React.createElement(Pseudo, { x: 500, y: 140, lines: LINK_CODE, active: st.code.filter((n) => n < 10), w: 250 }), /* @__PURE__ */ React.createElement(Pseudo, { x: 500, y: 260, lines: FIND_CODE, active: st.code.filter((n) => n > 10).map((n) => n - 10), w: 250 }), /* @__PURE__ */ React.createElement(Explain, { y: 450, a: st.a, b: st.b }));
+};
+ })();
+window.AlgWidgets["edmonds-karp"] = (function(){ const { C, Controls, Title, Explain, Node, Edge } = window.AlgLib;
+const V = ["s", "v1", "v2", "v3", "v4", "t"];
+const LBL = { s: "s", v1: "v\u2081", v2: "v\u2082", v3: "v\u2083", v4: "v\u2084", t: "t" };
+const Q = { s: [20, 95], v1: [110, 25], v2: [110, 165], v3: [225, 25], v4: [225, 165], t: [315, 95] };
+const E = [["s", "v1", 16], ["s", "v2", 13], ["v1", "v3", 12], ["v2", "v1", 4], ["v3", "v2", 9], ["v2", "v4", 14], ["v4", "v3", 7], ["v3", "t", 20], ["v4", "t", 4]];
+const cap = new Map(E.map(([u, v, c]) => [`${u}|${v}`, c]));
+function residual(f) {
+  const r = [];
+  E.forEach(([u, v, c]) => {
+    const fl = f.get(`${u}|${v}`);
+    if (c - fl > 0) r.push([u, v, c - fl, false]);
+    if (fl > 0) r.push([v, u, fl, true]);
+  });
+  return r;
+}
+function bfs(res) {
+  const pi = /* @__PURE__ */ new Map([["s", null]]), queue = ["s"];
+  while (queue.length) {
+    const u = queue.shift();
+    V.forEach((v) => {
+      const e = res.find((x) => x[0] === u && x[1] === v);
+      if (e && !pi.has(v)) {
+        pi.set(v, u);
+        queue.push(v);
+      }
+    });
+  }
+  if (!pi.has("t")) return { path: null, reach: new Set(pi.keys()) };
+  const path = ["t"];
+  while (path.at(0) !== "s") path.unshift(pi.get(path.at(0)));
+  return { path, reach: new Set(pi.keys()) };
+}
+function buildSteps() {
+  const f = new Map(E.map(([u, v]) => [`${u}|${v}`, 0])), out = [];
+  let value = 0, it = 0;
+  out.push({
+    res: residual(f),
+    f: new Map(f),
+    path: [],
+    value,
+    cut: null,
+    a: "Linje 1\u20132: flyten er 0 p\xE5 alle kanter. Restnettet G_f er da det samme som G.",
+    b: "Edmonds-Karp er Ford-Fulkerson der den for\xF8kende stien finnes med BFS, alts\xE5 en sti med f\xE6rrest mulig kanter."
+  });
+  for (; ; ) {
+    const res = residual(f), { path, reach } = bfs(res);
+    if (!path) {
+      const cut = E.filter(([u, v]) => reach.has(u) && !reach.has(v));
+      const cc = cut.reduce((s, e) => s + e[2], 0);
+      out.push({
+        res,
+        f: new Map(f),
+        path: [],
+        value,
+        cut: { S: reach, edges: cut.map(([u, v]) => `${u}|${v}`), cap: cc },
+        a: `BFS finner ingen sti fra s til t i G_f, s\xE5 flyten er maksimal: |f| = ${value}.`,
+        b: `Nodene som kan n\xE5s fra s i G_f, S = {${[...reach].map((x) => LBL[x]).join(", ")}}, gir et minimalt snitt. Kantene ut av S er fulle, og c(S, T) = ${cut.map((e) => e[2]).join(" + ")} = ${cc} = |f|.`
+      });
+      break;
+    }
+    it += 1;
+    const edges = path.slice(1).map((v, i) => res.find((x) => x[0] === path[i] && x[1] === v));
+    const cf = Math.min(...edges.map((e) => e[2]));
+    const back = edges.filter((e) => e[3]);
+    edges.forEach(([u, v, , isBack]) => {
+      if (!isBack) f.set(`${u}|${v}`, f.get(`${u}|${v}`) + cf);
+      else f.set(`${v}|${u}`, f.get(`${v}|${u}`) - cf);
+    });
+    value += cf;
+    out.push({
+      res,
+      f: new Map(f),
+      path,
+      value,
+      cut: null,
+      a: `Iterasjon ${it}: BFS finner p = ${path.map((x) => LBL[x]).join(" \u2192 ")} med c_f(p) = min(${edges.map((e) => e[2]).join(", ")}) = ${cf}. Flyten \xF8kes med ${cf}, til |f| = ${value}.`,
+      b: back.length ? `Stien bruker ${back.map((e) => `(${LBL[e[0]]}, ${LBL[e[1]]})`).join(", ")} baklengs, s\xE5 flyt p\xE5 den opprinnelige kanten oppheves (linje 8).` : "Venstre: restnettet f\xF8r \xF8kningen, med stien uthevet. H\xF8yre: flyten etterp\xE5."
+    });
+  }
+  return out;
+}
+const STEPS = buildSteps();
+function Panel({ x0, y0, title, children }) {
+  return /* @__PURE__ */ React.createElement("g", null, /* @__PURE__ */ React.createElement("text", { x: x0, y: y0 - 20, fontSize: "12", fontWeight: "600", fill: C.quiet }, title), /* @__PURE__ */ React.createElement("g", { transform: `translate(${x0 + 15}, ${y0})` }, children));
+}
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = STEPS.length, st = STEPS.at(s);
+  const onPath = (u, v) => {
+    const i = st.path.indexOf(u);
+    return i >= 0 && st.path.at(i + 1) === v;
+  };
+  const both = (u, v) => st.res.some((e) => e[0] === u && e[1] === v) && st.res.some((e) => e[0] === v && e[1] === u);
+  const inS = (v) => st.cut && st.cut.S.has(v);
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 530", role: "img", "aria-label": "Edmonds-Karp steg for steg", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "Edmonds-Karp (Ford-Fulkerson med BFS) steg for steg", subtitle: "Flytnettet fra bokas figur 24.1; venstre er restnettet G_f, h\xF8yre er flyten f/c" }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS }), /* @__PURE__ */ React.createElement(Panel, { x0: 20, y0: 170, title: st.cut ? "Restnett G_f (ingen sti til t)" : "Restnett G_f med for\xF8kende sti" }, st.res.map(([u, v, rc, isBack], k) => {
+    const pth = onPath(u, v);
+    return /* @__PURE__ */ React.createElement(
+      Edge,
+      {
+        key: k,
+        p: Q[u],
+        q: Q[v],
+        directed: true,
+        r: 18,
+        bend: both(u, v) ? 12 : 0,
+        label: rc,
+        color: pth ? C.cmp : isBack ? C.purple : C.edge,
+        width: pth ? 3 : 1.25,
+        dash: isBack && !pth ? "4 3" : void 0
+      }
+    );
+  }), V.map((v) => /* @__PURE__ */ React.createElement(
+    Node,
+    {
+      key: v,
+      x: Q[v][0],
+      y: Q[v][1],
+      r: 18,
+      label: LBL[v],
+      fill: inS(v) ? C.accent : "none",
+      fillOpacity: inS(v) ? 0.25 : 0,
+      stroke: st.path.includes(v) ? C.cmp : C.edge,
+      strokeWidth: st.path.includes(v) ? 2.5 : 1.25
+    }
+  ))), /* @__PURE__ */ React.createElement(Panel, { x0: 395, y0: 170, title: `Flyt f, |f| = ${st.value}` }, E.map(([u, v, c], k) => {
+    const fl = st.f.get(`${u}|${v}`), cutE = st.cut && st.cut.edges.includes(`${u}|${v}`);
+    return /* @__PURE__ */ React.createElement(
+      Edge,
+      {
+        key: k,
+        p: Q[u],
+        q: Q[v],
+        directed: true,
+        r: 18,
+        label: `${fl}/${c}`,
+        color: cutE ? C.bad : fl > 0 ? C.accent : C.edge,
+        width: cutE ? 3 : fl > 0 ? 1 + fl / c * 2.5 : 1.25
+      }
+    );
+  }), V.map((v) => /* @__PURE__ */ React.createElement(Node, { key: v, x: Q[v][0], y: Q[v][1], r: 18, label: LBL[v], fill: inS(v) ? C.accent : "none", fillOpacity: inS(v) ? 0.25 : 0 }))), /* @__PURE__ */ React.createElement("text", { x: "24", y: "400", fontSize: "12", fill: C.quiet }, "Restnett: gr\xE5 = c \u2212 f p\xE5 kanter i G, lilla stiplet = f baklengs (kan oppheves), oransje = for\xF8kende sti."), /* @__PURE__ */ React.createElement("text", { x: "24", y: "418", fontSize: "12", fill: C.quiet }, st.cut ? "Fylte noder = S. R\xF8de kanter = snittkantene fra S til T, alle fulle." : "Flyt: bl\xE5 kanter har flyt, tykkere jo fullere de er."), /* @__PURE__ */ React.createElement(Explain, { y: 452, a: st.a, b: st.b }));
+};
+ })();
+window.AlgWidgets["floyd-warshall"] = (function(){ const { C, Controls, Title, Explain, Node, Edge, Matrix, fmt } = window.AlgLib;
+const n = 5;
+const P = [[60, 250], [150, 170], [250, 250], [210, 345], [100, 345]];
+const E = [[1, 2, 3], [1, 3, 8, 0.2], [1, 5, -4], [2, 4, 1, 0.72], [2, 5, 7, 0.72], [3, 2, 4], [4, 1, 2, 0.3], [4, 3, -5], [5, 4, 6]];
+const LBL = [1, 2, 3, 4, 5];
+function buildSteps() {
+  let D = [...Array(n)].map((_, i) => [...Array(n)].map((__, j) => i === j ? 0 : Infinity));
+  let Pi = [...Array(n)].map(() => [...Array(n)].map(() => null));
+  E.forEach(([u, v, w]) => {
+    D[u - 1][v - 1] = w;
+    Pi[u - 1][v - 1] = u;
+  });
+  const out = [];
+  out.push({
+    k: 0,
+    D: D.map((r) => r.slice()),
+    Pi: Pi.map((r) => r.slice()),
+    changed: [],
+    path: [],
+    a: "D\u207D\u2070\u207E = W: kantvektene, 0 p\xE5 diagonalen og \u221E der det ikke er noen kant. \u03C0\u207D\u2070\u207E\u1D62\u2C7C = i hvis (i, j) er en kant, ellers NIL.",
+    b: "D\u207D\u1D4F\u207E\u1D62\u2C7C er lengden av korteste vei fra i til j der alle mellomnodene er i {1, \u2026, k}."
+  });
+  for (let k = 1; k <= n; k += 1) {
+    const ND = D.map((r) => r.slice()), NP = Pi.map((r) => r.slice()), changed = [];
+    for (let i = 0; i < n; i += 1) {
+      for (let j = 0; j < n; j += 1) {
+        const via = D[i][k - 1] + D[k - 1][j];
+        if (via < D[i][j]) {
+          ND[i][j] = via;
+          NP[i][j] = Pi[k - 1][j];
+          changed.push([i, j, D[i][j], via]);
+        }
+      }
+    }
+    D = ND;
+    Pi = NP;
+    const ex = changed.slice(0, 3).map(([i, j, o, nw]) => `d${i + 1}${j + 1}: ${fmt(o)} \u2192 ${fmt(nw)}`).join(", ");
+    out.push({
+      k,
+      D: D.map((r) => r.slice()),
+      Pi: Pi.map((r) => r.slice()),
+      changed,
+      path: [],
+      a: `k = ${k}: n\xE5 kan node ${k} brukes som mellomnode. For hver (i, j): d\u1D62\u2C7C = min(d\u1D62\u2C7C, d\u1D62\u2096 + d\u2096\u2C7C). ${changed.length} celler blir bedre${changed.length ? `, f.eks. ${ex}` : ""}.`,
+      b: `N\xE5r en celle blir bedre, settes \u03C0\u1D62\u2C7C = \u03C0\u2096\u2C7C: forgjengeren til j p\xE5 den beste veien fra ${k} til j. Rad og kolonne ${k} (markert) endres aldri i runde k.`
+    });
+  }
+  const path = [];
+  const rec = (i, j) => {
+    if (i === j) {
+      path.push(i);
+      return;
+    }
+    rec(i, Pi[i - 1][j - 1]);
+    path.push(j);
+  };
+  rec(1, 2);
+  out.push({
+    k: n,
+    D,
+    Pi,
+    changed: [],
+    path,
+    print: true,
+    a: `PRINT-ALL-PAIRS-SHORTEST-PATH(\u03A0, 1, 2): \u03C0\u2081\u2082 = 3, \u03C0\u2081\u2083 = 4, \u03C0\u2081\u2084 = 5, \u03C0\u2081\u2085 = 1. Utskrift p\xE5 vei tilbake fra rekursjonen: ${path.join(" \u2192 ")}.`,
+    b: `Lengden er d\u2081\u2082 = ${D[0][1]}: (\u22124) + 6 + (\u22125) + 4. Rad i i \u03A0 er et korteste-vei-tre med rot i.`
+  });
+  return out;
+}
+const STEPS = buildSteps();
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = STEPS.length, st = STEPS.at(s);
+  const hlD = /* @__PURE__ */ new Map(), hlP = /* @__PURE__ */ new Map();
+  st.changed.forEach(([i, j]) => {
+    hlD.set(`${i},${j}`, C.good);
+    hlP.set(`${i},${j}`, C.good);
+  });
+  if (st.k > 0 && !st.print) {
+    for (let t = 0; t < n; t += 1) {
+      [`${st.k - 1},${t}`, `${t},${st.k - 1}`].forEach((key) => {
+        if (!hlD.has(key)) hlD.set(key, C.accent);
+      });
+    }
+  }
+  if (st.print) st.path.slice(1).forEach((j) => hlP.set(`0,${j - 1}`, C.cmp));
+  const onPath = (u, v) => {
+    const i = st.path.indexOf(u);
+    return i >= 0 && st.path.at(i + 1) === v;
+  };
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 520", role: "img", "aria-label": "Floyd-Warshall steg for steg", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "Floyd-Warshall steg for steg", subtitle: "Grafen fra bokas figur 23.1; ett steg per verdi av k (bokas figur 23.4)" }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS }), E.map(([u, v, w, lt], idx) => {
+    const pth = onPath(u, v), viaK = st.k > 0 && !st.print && (u === st.k || v === st.k);
+    return /* @__PURE__ */ React.createElement(
+      Edge,
+      {
+        key: idx,
+        p: P[u - 1],
+        q: P[v - 1],
+        directed: true,
+        label: fmt(w),
+        labelT: lt || 0.5,
+        r: 18,
+        color: pth ? C.cmp : viaK ? C.accent : C.edge,
+        width: pth ? 3 : viaK ? 2 : 1.25
+      }
+    );
+  }), LBL.map((v, i) => /* @__PURE__ */ React.createElement(
+    Node,
+    {
+      key: v,
+      x: P[i][0],
+      y: P[i][1],
+      r: 18,
+      label: v,
+      fill: st.k === v && !st.print ? C.accent : "none",
+      fillOpacity: st.k === v && !st.print ? 0.25 : 0
+    }
+  )), /* @__PURE__ */ React.createElement(Matrix, { x: 290, y: 160, label: `D\u207D${"\u2070\xB9\xB2\xB3\u2074\u2075".charAt(st.k)}\u207E`, data: st.D.map((r) => r.map(fmt)), hl: hlD, rowLabels: LBL, colLabels: LBL }), /* @__PURE__ */ React.createElement(Matrix, { x: 520, y: 160, label: `\u03A0\u207D${"\u2070\xB9\xB2\xB3\u2074\u2075".charAt(st.k)}\u207E`, data: st.Pi.map((r) => r.map((v) => v === null ? "NIL" : v)), hl: hlP, rowLabels: LBL, colLabels: LBL, size: 11 }), /* @__PURE__ */ React.createElement("text", { x: "290", y: "310", fontSize: "12", fill: C.quiet }, "Gr\xF8nn = forbedret i denne runden. Bl\xE5 = rad og kolonne k, som brukes i formelen."), /* @__PURE__ */ React.createElement("text", { x: "290", y: "330", fontSize: "12", fill: C.quiet }, st.print ? "Oransje i \u03A0: forgjengerne som f\xF8lges i rad 1." : `d\u1D62\u2C7C\u207D\u1D4F\u207E = min(d\u1D62\u2C7C\u207D\u1D4F\u207B\xB9\u207E, d\u1D62\u2096\u207D\u1D4F\u207B\xB9\u207E + d\u2096\u2C7C\u207D\u1D4F\u207B\xB9\u207E)`), /* @__PURE__ */ React.createElement(Explain, { y: 410, a: st.a, b: st.b }));
 };
  })();
 window.AlgWidgets["heapsort"] = (function(){ return () => {
@@ -702,6 +1624,253 @@ window.AlgWidgets["merge-sort"] = (function(){ return () => {
   })), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "explanation" }, /* @__PURE__ */ React.createElement("text", { x: "24", y: "348", fill: ink }, st.a), /* @__PURE__ */ React.createElement("text", { x: "24", y: "370", fill: quiet }, st.b)));
 };
  })();
+window.AlgWidgets["mst-kruskal"] = (function(){ const { C, PALETTE, Controls, Title, Explain, Node, Edge } = window.AlgLib;
+const V = ["a", "b", "c", "d", "e", "f", "g", "h", "i"];
+const P = /* @__PURE__ */ new Map([["a", [50, 250]], ["b", [140, 170]], ["c", [270, 170]], ["d", [400, 170]], ["e", [490, 250]], ["f", [400, 330]], ["g", [270, 330]], ["h", [140, 330]], ["i", [205, 250]]]);
+const SORTED = [["h", "g", 1], ["i", "c", 2], ["g", "f", 2], ["a", "b", 4], ["c", "f", 4], ["i", "g", 6], ["c", "d", 7], ["h", "i", 7], ["a", "h", 8], ["b", "c", 8], ["d", "e", 9], ["e", "f", 10], ["b", "h", 11], ["d", "f", 14]];
+function buildSteps() {
+  const rep = new Map(V.map((v) => [v, v]));
+  const find = (v) => rep.get(v) === v ? v : find(rep.get(v));
+  const A = [], status = /* @__PURE__ */ new Map(), out = [];
+  let total = 0;
+  const snap = (o) => {
+    const comp = new Map(V.map((v) => [v, find(v)]));
+    out.push({ cur: -1, ...o, A: A.slice(), status: new Map(status), comp, total });
+  };
+  snap({ a: "Linje 1\u20135: A = \u2205, og hver node er sin egen mengde (MAKE-SET). Kantene sorteres etter vekt.", b: "Fargene viser mengdene, alts\xE5 tr\xE6rne i skogen A. Lista til h\xF8yre er kantene i sortert rekkef\xF8lge." });
+  SORTED.forEach((e, k) => {
+    const [u, v, w] = e, ru = find(u), rv = find(v);
+    if (ru !== rv) {
+      A.push(k);
+      rep.set(ru, rv);
+      status.set(k, "ok");
+      total += w;
+      snap({
+        cur: k,
+        a: `Linje 7\u20139: (${u}, ${v}) med vekt ${w}. FIND-SET(${u}) \u2260 FIND-SET(${v}), s\xE5 kanten legges i A og mengdene sl\xE5s sammen med UNION.`,
+        b: `Kanten er lettest blant dem som krysser snittet mellom treet til ${u} og resten, s\xE5 den er trygg (korollar 21.2). Vekt s\xE5 langt: ${total}.`
+      });
+    } else {
+      status.set(k, "no");
+      snap({ cur: k, a: `Linje 7: (${u}, ${v}) med vekt ${w}. ${u} og ${v} er allerede i samme mengde, s\xE5 kanten hoppes over.`, b: "Den ville laget en sykel i A." });
+    }
+  });
+  out.at(-1).b += ` Ferdig: A er et minimalt spenntre med vekt ${total}.`;
+  return out;
+}
+const STEPS = buildSteps();
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = STEPS.length, st = STEPS.at(s);
+  const roots = [...new Set(V.map((v) => st.comp.get(v)))];
+  const colorOf = (v) => {
+    const r = st.comp.get(v);
+    const size = V.filter((x) => st.comp.get(x) === r).length;
+    return size > 1 ? PALETTE[roots.indexOf(r) % PALETTE.length] : null;
+  };
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 520", role: "img", "aria-label": "MST-Kruskal steg for steg", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "MST-Kruskal steg for steg", subtitle: "Grafen fra bokas figur 21.1; kantene behandles i sortert rekkef\xF8lge" }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS }), SORTED.map((e, k) => {
+    const inA = st.A.includes(k), cur = k === st.cur;
+    return /* @__PURE__ */ React.createElement(
+      Edge,
+      {
+        key: k,
+        p: P.get(e[0]),
+        q: P.get(e[1]),
+        label: e[2],
+        color: cur ? C.cmp : inA ? C.accent : C.edge,
+        width: cur || inA ? 3.5 : 1.25,
+        dash: st.status.get(k) === "no" && !cur ? "4 4" : void 0
+      }
+    );
+  }), V.map((v) => {
+    const [x, y] = P.get(v), col = colorOf(v);
+    return /* @__PURE__ */ React.createElement(Node, { key: v, x, y, label: v, fill: col || "none", fillOpacity: col ? 0.28 : 0 });
+  }), /* @__PURE__ */ React.createElement("text", { x: "560", y: "140", fontSize: "12", fill: C.quiet }, "Sortert kantliste"), SORTED.map((e, k) => {
+    const stt = st.status.get(k), cur = k === st.cur, y = 160 + k * 19;
+    return /* @__PURE__ */ React.createElement("g", { key: `r${k}` }, cur ? /* @__PURE__ */ React.createElement("rect", { x: "554", y: y - 13, width: "180", height: "18", rx: "3", fill: C.cmp, fillOpacity: "0.16" }) : null, /* @__PURE__ */ React.createElement("text", { x: "562", y, fontSize: "12", fill: stt === "no" ? C.quiet : C.ink, textDecoration: stt === "no" ? "line-through" : void 0 }, `(${e[0]}, ${e[1]})`), /* @__PURE__ */ React.createElement("text", { x: "630", y, fontSize: "12", fill: C.quiet }, `w = ${e[2]}`), /* @__PURE__ */ React.createElement("text", { x: "700", y, fontSize: "13", fontWeight: "600", fill: stt === "ok" ? C.good : C.bad }, stt === "ok" ? "\u2713" : stt === "no" ? "\u2717" : ""));
+  }), /* @__PURE__ */ React.createElement("text", { x: "24", y: "410", fontSize: "12", fill: C.quiet }, `Kanter i A: ${st.A.length} av ${V.length - 1}  \xB7  vekt ${st.total}  \xB7  stiplet = forkastet (ville gitt sykel)`), /* @__PURE__ */ React.createElement(Explain, { y: 452, a: st.a, b: st.b }));
+};
+ })();
+window.AlgWidgets["mst-prim"] = (function(){ const { C, Controls, Title, Explain, Node, Edge, Pseudo, fmt } = window.AlgLib;
+const V = ["a", "b", "c", "d", "e", "f", "g", "h", "i"];
+const P = /* @__PURE__ */ new Map([["a", [50, 250]], ["b", [140, 170]], ["c", [270, 170]], ["d", [400, 170]], ["e", [490, 250]], ["f", [400, 330]], ["g", [270, 330]], ["h", [140, 330]], ["i", [205, 250]]]);
+const E = [["a", "b", 4], ["a", "h", 8], ["b", "c", 8], ["b", "h", 11], ["c", "d", 7], ["c", "f", 4], ["c", "i", 2], ["d", "e", 9], ["d", "f", 14], ["e", "f", 10], ["f", "g", 2], ["g", "h", 1], ["g", "i", 6], ["h", "i", 7]];
+const W = /* @__PURE__ */ new Map();
+E.forEach(([u, v, w]) => {
+  W.set(`${u}${v}`, w);
+  W.set(`${v}${u}`, w);
+});
+const Adj = new Map(V.map((v) => [v, V.filter((x) => W.has(`${v}${x}`))]));
+const CODE = [
+  "MST-PRIM(G, w, r)",
+  " 8  while Q \u2260 \u2205",
+  " 9    u = EXTRACT-MIN(Q)",
+  "10    for each v in G.Adj[u]",
+  "11      if v\u2208Q and w(u,v)<v.key",
+  "12        v.\u03C0 = u",
+  "13        v.key = w(u,v)",
+  "14        DECREASE-KEY(Q,v,w(u,v))"
+];
+function buildSteps() {
+  const key = new Map(V.map((v) => [v, Infinity])), pi = new Map(V.map((v) => [v, null]));
+  const inQ = new Set(V), out = [];
+  key.set("a", 0);
+  const snap = (o) => out.push({ u: null, upd: [], code: [], ...o, key: new Map(key), pi: new Map(pi), inQ: new Set(inQ) });
+  snap({ a: "Linje 1\u20137: alle noder f\xE5r key = \u221E og \u03C0 = NIL, unntatt roten a, som f\xE5r key = 0. Alle legges i min-prioritetsk\xF8en Q.", b: "v.key er vekten p\xE5 den letteste kanten fra v til treet s\xE5 langt." });
+  while (inQ.size > 0) {
+    const u = [...inQ].sort((x, y) => key.get(x) - key.get(y) || x.localeCompare(y)).at(0);
+    inQ.delete(u);
+    const upd = [];
+    Adj.get(u).forEach((v) => {
+      if (inQ.has(v) && W.get(`${u}${v}`) < key.get(v)) {
+        upd.push(`${v}: ${fmt(key.get(v))} \u2192 ${W.get(`${u}${v}`)}`);
+        pi.set(v, u);
+        key.set(v, W.get(`${u}${v}`));
+      }
+    });
+    const added = pi.get(u) ? `Kanten (${pi.get(u)}, ${u}) med vekt ${key.get(u)} blir en del av treet. ` : "Roten blir f\xF8rste node i treet. ";
+    snap({
+      u,
+      upd: upd.map((x) => x.at(0)),
+      code: upd.length ? [9, 10, 11, 12, 13, 14] : [9, 10, 11],
+      a: `Linje 9: EXTRACT-MIN gir ${u} (key = ${key.get(u)}). ${added}`,
+      b: upd.length ? `Linje 10\u201314: naboer i Q f\xE5r lavere key: ${upd.join(", ")}.` : "Linje 10\u201314: ingen naboer i Q f\xE5r lavere key."
+    });
+  }
+  const total = V.reduce((s, v) => s + (pi.get(v) ? key.get(v) : 0), 0);
+  out.at(-1).b += ` Q er tom. Treet {(v, v.\u03C0)} har vekt ${total}.`;
+  return out;
+}
+const STEPS = buildSteps();
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = STEPS.length, st = STEPS.at(s);
+  const isTree = (u, v) => st.pi.get(v) === u && !st.inQ.has(v) || st.pi.get(u) === v && !st.inQ.has(u);
+  const isCand = (u, v) => st.pi.get(v) === u && st.inQ.has(v) || st.pi.get(u) === v && st.inQ.has(u);
+  const Qs = [...st.inQ].sort((x, y) => st.key.get(x) - st.key.get(y) || x.localeCompare(y));
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 520", role: "img", "aria-label": "MST-Prim steg for steg", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "MST-Prim steg for steg", subtitle: "Grafen fra bokas figur 21.1 med rot a; tallet over hver node er v.key" }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS }), E.map(([u, v, w]) => {
+    const t = isTree(u, v), c = isCand(u, v);
+    return /* @__PURE__ */ React.createElement(Edge, { key: `${u}${v}`, p: P.get(u), q: P.get(v), label: w, color: t ? C.accent : c ? C.cmp : C.edge, width: t ? 3.5 : c ? 2 : 1.25, dash: c ? "5 4" : void 0 });
+  }), V.map((v) => {
+    const [x, y] = P.get(v), inTree = !st.inQ.has(v), cur = v === st.u, up = st.upd.includes(v);
+    return /* @__PURE__ */ React.createElement(
+      Node,
+      {
+        key: v,
+        x,
+        y,
+        label: v,
+        fill: inTree ? C.accent : "none",
+        fillOpacity: inTree ? 0.22 : 0,
+        stroke: cur ? C.accent : up ? C.cmp : C.edge,
+        strokeWidth: cur || up ? 3 : 1.25,
+        sub: inTree ? null : fmt(st.key.get(v)),
+        subDy: y < 200 ? -28 : y > 300 ? 38 : -28,
+        subFill: up ? C.cmp : C.quiet
+      }
+    );
+  }), /* @__PURE__ */ React.createElement(Pseudo, { x: 530, y: 140, lines: CODE, active: st.code, w: 226, size: 11 }), /* @__PURE__ */ React.createElement("text", { x: "530", y: "300", fontSize: "12", fill: C.quiet }, "Q sortert p\xE5 key (minst f\xF8rst)"), Qs.map((v, k) => /* @__PURE__ */ React.createElement("g", { key: `q${k}` }, /* @__PURE__ */ React.createElement("rect", { x: 530 + k % 5 * 44, y: 310 + Math.floor(k / 5) * 34, width: "40", height: "28", rx: "4", fill: "none", stroke: C.edge }), /* @__PURE__ */ React.createElement("text", { x: 550 + k % 5 * 44, y: 329 + Math.floor(k / 5) * 34, textAnchor: "middle", fontSize: "12", fill: C.ink }, `${v}:${fmt(st.key.get(v))}`))), /* @__PURE__ */ React.createElement("text", { x: "24", y: "410", fontSize: "12", fill: C.quiet }, "Fylt node = i treet (V \u2212 Q). Bl\xE5 kant = i treet. Oransje stiplet = (v, v.\u03C0) for v i Q, letteste kant over snittet fra v."), /* @__PURE__ */ React.createElement(Explain, { y: 452, a: st.a, b: st.b }));
+};
+ })();
+window.AlgWidgets["np-reductions"] = (function(){ const { C, Controls, Title, Para, wrap } = window.AlgLib;
+const NODES = [
+  ["circ", "CIRCUIT-SAT", 330, 150, null],
+  ["sat", "SAT", 330, 205, "circ"],
+  ["cnf", "3-CNF-SAT", 330, 260, "sat"],
+  ["clique", "CLIQUE", 210, 315, "cnf"],
+  ["subset", "SUBSET-SUM", 470, 315, "cnf"],
+  ["vc", "VERTEX-COVER", 210, 370, "clique"],
+  ["knap", "Bin\xE6r ryggsekk", 470, 370, "subset", true],
+  ["ham", "HAM-CYCLE", 210, 425, "vc"],
+  ["tsp", "TSP", 110, 480, "ham"],
+  ["lsp", "Lengste enkle vei", 320, 480, "ham", true]
+];
+const INFO = {
+  circ: {
+    d: "Gitt en boolsk krets med AND-, OR- og NOT-porter og \xE9n utgang: finnes det en input som gir utgangen 1?",
+    np: "Sertifikat: verdiene p\xE5 inputene. Simuler kretsen i polynomisk tid.",
+    red: "NP-hard direkte (lemma 34.6): for et vilk\xE5rlig L i NP bygges en krets som simulerer verifikasjonsalgoritmen A(x, y) for fast x. Kretsen er tilfredsstillbar hvis og bare hvis det finnes et sertifikat y. Dette er \xABroten\xBB: alle andre bevis reduserer fra den."
+  },
+  sat: {
+    d: "Gitt en boolsk formel \u03C6 med variabler, \u2227, \u2228, \xAC, \u2192 og \u2194: finnes det en tilordning som gj\xF8r \u03C6 sann?",
+    np: "Sertifikat: en tilordning. Evaluer formelen i polynomisk tid.",
+    red: "CIRCUIT-SAT \u2264p SAT: gi hver ledning i kretsen en variabel, og skriv hver port som en liten formel, f.eks. x\u2081\u2080 \u2194 (x\u2087 \u2227 x\u2088 \u2227 x\u2089). \u03C6 er utgangsvariabelen AND-et med alle portformlene. Rett fram innsetting kunne gitt eksponentielt store formler, s\xE5 det er derfor vi innf\xF8rer variabler for ledningene."
+  },
+  cnf: {
+    d: "Er en formel p\xE5 3-CNF-form (AND av klausuler, hver en OR av n\xF8yaktig tre literaler) tilfredsstillbar?",
+    np: "Sertifikat: en tilordning, som for SAT.",
+    red: "SAT \u2264p 3-CNF-SAT: bygg et bin\xE6rt parsetre for formelen og gi hver indre node en variabel (som for kretsen). Skriv hver liten delformel om til CNF med sannhetstabell og De Morgan, og fyll p\xE5 med hjelpevariabler til n\xF8yaktig tre literaler per klausul."
+  },
+  clique: {
+    d: "Har grafen G en klikk (komplett delgraf) med k noder?",
+    np: "Sertifikat: de k nodene. Sjekk at alle par er naboer, O(k\xB2).",
+    red: "3-CNF-SAT \u2264p CLIQUE: \xE9n node per literal i hver klausul. Kant mellom to literaler hvis de er i ulike klausuler og ikke er hverandres negasjon. \u03C6 med k klausuler er tilfredsstillbar hvis og bare hvis G har en klikk av st\xF8rrelse k. Se figuren under."
+  },
+  subset: {
+    d: "Gitt en mengde S av positive heltall og et m\xE5l t: finnes det en delmengde med sum n\xF8yaktig t?",
+    np: "Sertifikat: delmengden. Summer og sammenlign.",
+    red: "3-CNF-SAT \u2264p SUBSET-SUM: lag tall med ett siffer per variabel og per klausul (i base 10). For hver variabel to tall (x\u1D62 og \xACx\u1D62), for hver klausul to \xABslakk\xBB-tall. M\xE5let t har 1 i variabelsifrene (velg n\xF8yaktig \xE9n av x\u1D62 og \xACx\u1D62) og 4 i klausulsifrene (minst \xE9n sann literal pluss slakk)."
+  },
+  vc: {
+    d: "Har grafen G et nodedekke med k noder, alts\xE5 k noder slik at hver kant har minst \xE9n ende i mengden?",
+    np: "Sertifikat: de k nodene. Sjekk hver kant.",
+    red: "CLIQUE \u2264p VERTEX-COVER: bruk komplementgrafen \u1E20 (kant der G ikke har kant). G har en klikk av st\xF8rrelse k hvis og bare hvis \u1E20 har et nodedekke av st\xF8rrelse |V| \u2212 k: nodene utenfor klikken dekker alle kantene i \u1E20."
+  },
+  knap: {
+    d: "Beslutningsversjonen av bin\xE6r ryggsekk: finnes et utvalg med vekt \u2264 W og verdi \u2265 V?",
+    np: "I NP: sertifikatet er utvalget. Optimeringsversjonen er NP-hard.",
+    red: "SUBSET-SUM \u2264p ryggsekk: la hvert tall v\xE6re b\xE5de vekt og verdi, og sett W = V = t. Et utvalg med vekt \u2264 t og verdi \u2265 t har sum n\xF8yaktig t. \u0398(nW)-algoritmen (appendiks E) er bare pseudopolynomisk, s\xE5 den motbeviser ikke dette."
+  },
+  ham: {
+    d: "Har grafen G en Hamilton-sykel, alts\xE5 en enkel sykel som g\xE5r gjennom alle nodene?",
+    np: "Sertifikat: rekkef\xF8lgen av nodene. Sjekk at de er distinkte og at nabopar er kanter.",
+    red: "VERTEX-COVER \u2264p HAM-CYCLE: \xE9n \xABdings\xBB (widget) med 12 noder per kant i G, og k velgernoder. Dingsen for (u, v) kan bare krysses p\xE5 tre m\xE5ter, som tilsvarer at u, v eller begge er i dekket. En Hamilton-sykel finnes hvis og bare hvis G har et nodedekke med k noder."
+  },
+  tsp: {
+    d: "Gitt en komplett graf med heltallskostnader og et tall k: finnes det en rundtur innom alle byene med kostnad \u2264 k?",
+    np: "Sertifikat: rundturen. Sjekk at den er en permutasjon og summer kostnadene.",
+    red: "HAM-CYCLE \u2264p TSP: lag den komplette grafen med kostnad 0 p\xE5 kantene som finnes i G og 1 p\xE5 de andre, og k = 0. En tur med kostnad 0 bruker bare kanter fra G, alts\xE5 er den en Hamilton-sykel."
+  },
+  lsp: {
+    d: "Finnes det en enkel sti fra u til v med minst k kanter? (Optimering: finn lengste enkle vei.)",
+    np: "Sertifikat: stien. Optimeringsversjonen er NP-hard.",
+    red: "HAM-PATH (variant av HAM-CYCLE) \u2264p lengste enkle vei: en enkel sti med |V| \u2212 1 kanter g\xE5r gjennom alle nodene. Kontrast: korteste vei kan finnes i polynomisk tid, fordi den har optimal delstruktur; lengste enkle vei har ikke det."
+  }
+};
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = NODES.length;
+  const cur = NODES[s];
+  const pos = new Map(NODES.map((n) => [n[0], n]));
+  const ancestors = /* @__PURE__ */ new Set();
+  for (let p = cur; p; p = p[4] ? pos.get(p[4]) : null) ancestors.add(p[0]);
+  const info = INFO[cur[0]];
+  const parent = cur[4] ? pos.get(cur[4])[1] : null;
+  const t1 = `Problemet: ${info.d}`, t2 = `Hvorfor i NP: ${info.np}`, t3 = parent ? `Reduksjon fra ${parent}: ${info.red}` : `Hvorfor NP-hard: ${info.red}`;
+  const y1 = 562, y2 = y1 + wrap(t1, 110).length * 18 + 8, y3 = y2 + wrap(t2, 110).length * 18 + 8;
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 720", role: "img", "aria-label": "Reduksjonstreet for NP-komplette problemer", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "NP-komplette problemer og reduksjonene mellom dem", subtitle: "Bokas figur 34.13 pluss ryggsekk og lengste enkle vei. Klikk p\xE5 et problem, eller bla med knappene." }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS }), NODES.filter((n) => n[4]).map((n) => {
+    const p = pos.get(n[4]), on = ancestors.has(n[0]) && ancestors.has(p[0]);
+    return /* @__PURE__ */ React.createElement("g", { key: `e${n[0]}` }, /* @__PURE__ */ React.createElement("line", { x1: p[2], y1: p[3] + 13, x2: n[2], y2: n[3] - 15, stroke: on ? C.cmp : C.edge, strokeWidth: on ? 2.5 : 1.25, strokeDasharray: n[5] ? "5 4" : void 0 }), /* @__PURE__ */ React.createElement("path", { d: `M${n[2]},${n[3] - 13} l-5,-9 l10,0 Z`, fill: on ? C.cmp : C.edge }));
+  }), NODES.map((n, i) => {
+    const sel = i === s, w = n[1].length * 8 + 24;
+    return /* @__PURE__ */ React.createElement("g", { key: n[0], onClick: () => setS(i), cursor: "pointer" }, /* @__PURE__ */ React.createElement(
+      "rect",
+      {
+        x: n[2] - w / 2,
+        y: n[3] - 13,
+        width: w,
+        height: "26",
+        rx: "6",
+        fill: sel ? C.accent : "var(--cds-chart-background)",
+        fillOpacity: sel ? 0.18 : 1,
+        stroke: sel ? C.accent : ancestors.has(n[0]) ? C.cmp : C.edge,
+        strokeWidth: sel ? 2.5 : 1.25,
+        strokeDasharray: n[5] ? "5 3" : void 0
+      }
+    ), /* @__PURE__ */ React.createElement("text", { x: n[2], y: n[3] + 5, textAnchor: "middle", fontSize: "12", fontWeight: "600", fill: C.ink }, n[1]));
+  }), /* @__PURE__ */ React.createElement("text", { x: "560", y: "160", fontSize: "12", fill: C.quiet }, "Pil fra A til B: A \u2264p B,"), /* @__PURE__ */ React.createElement("text", { x: "560", y: "178", fontSize: "12", fill: C.quiet }, "B vises NP-hard ved \xE5"), /* @__PURE__ */ React.createElement("text", { x: "560", y: "196", fontSize: "12", fill: C.quiet }, "redusere fra A til B."), /* @__PURE__ */ React.createElement("text", { x: "560", y: "224", fontSize: "12", fill: C.quiet }, "Stiplet: NP-hard (F14),"), /* @__PURE__ */ React.createElement("text", { x: "560", y: "242", fontSize: "12", fill: C.quiet }, "ikke i bokas figur."), /* @__PURE__ */ React.createElement("line", { x1: "24", y1: "512", x2: "736", y2: "512", stroke: C.edge, strokeWidth: "0.75" }), /* @__PURE__ */ React.createElement("text", { x: "24", y: "538", fontSize: "14", fontWeight: "600", fill: C.ink }, cur[1]), /* @__PURE__ */ React.createElement(Para, { x: 24, y: y1, text: t1, max: 110 }), /* @__PURE__ */ React.createElement(Para, { x: 24, y: y2, text: t2, max: 110, fill: C.quiet }), /* @__PURE__ */ React.createElement(Para, { x: 24, y: y3, text: t3, max: 110 }));
+};
+ })();
 window.AlgWidgets["quicksort"] = (function(){ return () => {
   const [s, setS] = React.useState(0);
   const ink = "var(--cds-text-primary)", quiet = "var(--cds-text-secondary)", edge = "var(--cds-chart-axis)", tint = "var(--cds-chart-reference-tint)", accent = "var(--cds-chart-categorical-1)", lowc = "var(--cds-chart-categorical-3)", highc = "var(--cds-chart-categorical-4)";
@@ -1065,5 +2234,56 @@ window.AlgWidgets["topological-sort"] = (function(){ return () => {
     const p = P.get(v), c = st.col.get(v), cur = v === st.cur;
     return /* @__PURE__ */ React.createElement("g", { key: v }, /* @__PURE__ */ React.createElement("rect", { x: p.at(0) - 46, y: p.at(1) - 15, width: "92", height: "30", rx: "8", fill: c === "b" ? ink : c === "g" ? grayc : "none", fillOpacity: c === "b" ? 0.7 : c === "g" ? 0.28 : 0, stroke: cur ? accent : edge, strokeWidth: cur ? 3 : 1.25 }), /* @__PURE__ */ React.createElement("text", { x: p.at(0), y: p.at(1) + 4.5, textAnchor: "middle", fontSize: "12.5", fontWeight: "600", fill: c === "b" ? "var(--cds-chart-reference-tint)" : ink }, v), /* @__PURE__ */ React.createElement("text", { x: p.at(0) + 50, y: p.at(1) - 18, fontSize: "11.5", fill: quiet }, `${st.d.has(v) ? st.d.get(v) : ""}${st.d.has(v) ? "/" : ""}${st.f.has(v) ? st.f.get(v) : ""}`));
   })), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "list" }, /* @__PURE__ */ React.createElement("text", { "data-claude-text-id": "list-label", x: "24", y: "392", fontSize: "12", fill: quiet }, "Lenket liste (nye noder settes inn foran):"), st.list.map((v, k) => /* @__PURE__ */ React.createElement("g", { key: `l${v}` }, /* @__PURE__ */ React.createElement("rect", { x: 24 + k * 79, y: "402", width: "72", height: "26", rx: "4", fill: k === 0 && st.cur === v ? good : "none", fillOpacity: "0.18", stroke: k === 0 && st.cur === v ? good : edge, strokeWidth: k === 0 && st.cur === v ? 2 : 1 }), /* @__PURE__ */ React.createElement("text", { x: 60 + k * 79, y: "420", textAnchor: "middle", fontSize: "11.5", fill: ink }, v)))), /* @__PURE__ */ React.createElement("g", { "data-claude-anchor": "explanation" }, /* @__PURE__ */ React.createElement("text", { x: "24", y: "458", fill: ink }, st.a), /* @__PURE__ */ React.createElement("text", { x: "24", y: "480", fill: quiet }, st.b)));
+};
+ })();
+window.AlgWidgets["transitive-closure"] = (function(){ const { C, Controls, Title, Explain, Node, Edge, Matrix } = window.AlgLib;
+const n = 4;
+const P = [[80, 170], [240, 170], [240, 320], [80, 320]];
+const E = [[2, 3, 14], [3, 2, 14], [2, 4, 0], [4, 1, 0], [4, 3, 0]];
+const LBL = [1, 2, 3, 4];
+function buildSteps() {
+  let T = [...Array(n)].map((_, i) => [...Array(n)].map((__, j) => i === j ? 1 : 0));
+  E.forEach(([u, v]) => {
+    T[u - 1][v - 1] = 1;
+  });
+  const out = [{ k: 0, T: T.map((r) => r.slice()), changed: [], a: "Linje 1\u20136: t\u207D\u2070\u207E\u1D62\u2C7C = 1 hvis i = j eller (i, j) er en kant, ellers 0.", b: "t\u207D\u1D4F\u207E\u1D62\u2C7C = 1 betyr at det finnes en sti fra i til j der alle mellomnodene er i {1, \u2026, k}." }];
+  for (let k = 1; k <= n; k += 1) {
+    const NT = T.map((r) => r.slice()), changed = [];
+    for (let i = 0; i < n; i += 1) for (let j = 0; j < n; j += 1) {
+      if (!T[i][j] && T[i][k - 1] && T[k - 1][j]) {
+        NT[i][j] = 1;
+        changed.push([i, j]);
+      }
+    }
+    T = NT;
+    out.push({
+      k,
+      T: T.map((r) => r.slice()),
+      changed,
+      a: `k = ${k}: t\u1D62\u2C7C = t\u1D62\u2C7C \u2228 (t\u1D62\u2096 \u2227 t\u2096\u2C7C). ${changed.length ? `Nye stier via ${k}: ${changed.map(([i, j]) => `${i + 1} \u2192 ${j + 1}`).join(", ")}.` : `Node ${k} gir ingen nye stier.`}`,
+      b: k === n ? "T\u207D\u2074\u207E er den transitive tillukningen: t\u1D62\u2C7C = 1 hvis og bare hvis j kan n\xE5s fra i. Node 1 n\xE5r bare seg selv." : "Samme struktur som Floyd-Warshall, men med \u2228 og \u2227 i stedet for min og +."
+    });
+  }
+  return out;
+}
+const STEPS = buildSteps();
+return () => {
+  const [s, setS] = React.useState(0);
+  const N = STEPS.length, st = STEPS.at(s);
+  const hl = /* @__PURE__ */ new Map();
+  st.changed.forEach(([i, j]) => hl.set(`${i},${j}`, C.good));
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 760 470", role: "img", "aria-label": "Transitive-Closure steg for steg", fontSize: "13" }, /* @__PURE__ */ React.createElement(Title, { title: "Transitive-Closure steg for steg", subtitle: "Grafen fra bokas figur 23.5; ett steg per verdi av k" }), /* @__PURE__ */ React.createElement(Controls, { s, N, setS }), E.map(([u, v, bend], idx) => /* @__PURE__ */ React.createElement(
+    Edge,
+    {
+      key: idx,
+      p: P[u - 1],
+      q: P[v - 1],
+      directed: true,
+      bend,
+      r: 20,
+      color: st.k === u || st.k === v ? C.accent : C.edge,
+      width: st.k === u || st.k === v ? 2 : 1.25
+    }
+  )), st.changed.map(([i, j], idx) => i === j ? null : /* @__PURE__ */ React.createElement(Edge, { key: `n${idx}`, p: P[i], q: P[j], directed: true, bend: -30, r: 20, color: C.good, width: 2, dash: "5 4" })), LBL.map((v, i) => /* @__PURE__ */ React.createElement(Node, { key: v, x: P[i][0], y: P[i][1], label: v, fill: st.k === v ? C.accent : "none", fillOpacity: st.k === v ? 0.25 : 0 })), /* @__PURE__ */ React.createElement(Matrix, { x: 400, y: 170, label: `T\u207D${"\u2070\xB9\xB2\xB3\u2074".charAt(st.k)}\u207E`, data: st.T, hl, rowLabels: LBL, colLabels: LBL, cw: 40, ch: 26 }), /* @__PURE__ */ React.createElement("text", { x: "400", y: "310", fontSize: "12", fill: C.quiet }, "Gr\xF8nn celle og stiplet pil = ny sti funnet i denne runden."), /* @__PURE__ */ React.createElement(Explain, { y: 390, a: st.a, b: st.b }));
 };
  })();

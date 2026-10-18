@@ -3,7 +3,7 @@
 Alle algoritmene i pensumheftet, forklart opp mot læringsmålene, med pseudokode, korrekthetsbevis, kjøretid og en interaktiv figur du kan bla gjennom steg for steg. Pensum er Cormen mfl., *Introduction to Algorithms* (4. utg.), pluss pensumheftets appendikser.
 
 !!! abstract "Status"
-    Forelesning 1–8 er ferdig gjennomgått i sju kategorier. Forelesning 9–14 (minimale spenntrær, korteste vei, maks flyt og NP-kompletthet) gjenstår.
+    Hele pensum, forelesning 1–14, er gjennomgått i tolv kategorier med 31 interaktive figurer.
 
 ## Kategorier
 
@@ -16,12 +16,11 @@ Alle algoritmene i pensumheftet, forklart opp mot læringsmålene, med pseudokod
 | 5 | [Dynamisk programmering](5-dynamisk-programmering.md) | Stavkapping, LCS, binær ryggsekk | F6 |
 | 6 | [Grådige algoritmer](6-gradige-algoritmer.md) | Aktivitetsutvelgelse, kontinuerlig ryggsekk, Huffman | F7 |
 | 7 | [Graftraversering](7-graftraversering.md) | BFS, DFS, Topological-Sort, sterke komponenter | F8 |
-| 8 | *Minimale spenntrær* | Disjunkte mengder, Generic-MST, MST-Kruskal, MST-Prim | F9 |
-| 9 | *Korteste vei* | Relax, Bellman-Ford, Dag-Shortest-Paths, Dijkstra, Floyd-Warshall, Transitive-Closure | F10, F11 |
-| 10 | *Maksimal flyt* | Ford-Fulkerson, Edmonds-Karp, minimalt snitt, bipartitt matching | F12 |
-| 11 | *NP-kompletthet* | Problemer og reduksjoner | F13–F14 |
-
-Kursiv betyr at kategorien ikke er skrevet ennå.
+| 8 | [Minimale spenntrær](8-minimale-spenntraer.md) | Disjunkte mengder, Generic-MST, MST-Kruskal, MST-Prim | F9 |
+| 9 | [Korteste vei fra én til alle](9-korteste-vei-en-til-alle.md) | Relax, Bellman-Ford, Dag-Shortest-Paths, Dijkstra | F10 |
+| 10 | [Korteste vei fra alle til alle](10-korteste-vei-alle-til-alle.md) | Print-All-Pairs-Shortest-Path, Floyd-Warshall, Transitive-Closure | F11 |
+| 11 | [Maksimal flyt](11-maksimal-flyt.md) | Ford-Fulkerson, Edmonds-Karp, minimalt snitt, bipartitt matching | F12 |
+| 12 | [NP-kompletthet](12-np-kompletthet.md) | P, NP, reduksjoner, CIRCUIT-SAT og de NP-komplette problemene | F13–F14 |
 
 ## Slik er hver algoritme bygget opp
 
@@ -51,6 +50,7 @@ Se [Pensum og forelesninger](pensum.md) for hele listen over algoritmer per fore
 |---|---|
 | Boka (Cormen mfl., 4. utg.) | [AlgDat.pdf](pdf/AlgDat.pdf) |
 | Pensumheftet | [Pensumhefte.pdf](pdf/Pensumhefte.pdf) |
+| Lysark F9 (kortversjon) | [forelesn09_kort.pdf](pdf/forelesn09_kort.pdf) |
 
 !!! note "PDF-ene"
-    Legg boka og pensumheftet i mappen `docs/algdat/pdf/` med navnene over, så virker lenkene. Mappen holdes utenfor Git.
+    Legg PDF-ene i mappen `docs/algdat/pdf/` med navnene over, så virker lenkene. Mappen holdes utenfor Git.

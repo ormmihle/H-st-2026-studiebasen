@@ -16,15 +16,15 @@ Alle algoritmene i pensumheftet er standardstoff fra Cormen mfl. (4. utg.) pluss
 
 Stoffet fra forelesning 2a/2b (hashtabeller, lenkede lister, tabelldobling, reduksjonstyper) er støttelitteratur og blir ikke testet direkte.
 
-## Forelesning 9–14 (gjenstår)
+## Forelesning 9–14
 
-| F | Tema | Algoritmer og stoff |
-|---|---|---|
-| 9 | Minimale spenntrær | Disjunkte mengder: Make-Set, Union, Link, Find-Set, Connected-Components, Same-Component. Generic-MST, MST-Kruskal, MST-Prim |
-| 10 | Korteste vei fra én til alle | Relax og Initialize-Single-Source, Bellman-Ford, Dag-Shortest-Paths, Dijkstra |
-| 11 | Korteste vei fra alle til alle | Floyd-Warshall, Transitive-Closure, Print-All-Pairs-Shortest-Path |
-| 12 | Maksimal flyt | Ford-Fulkerson-Method, Ford-Fulkerson, Edmonds-Karp. Bruke maks flyt til å finne minimalt snitt og maksimum bipartitt matching |
-| 13–14 | NP-kompletthet | Problemer og reduksjoner: CIRCUIT-SAT, SAT, 3-CNF-SAT, CLIQUE, VERTEX-COVER, HAM-CYCLE, TSP, SUBSET-SUM, og hvorfor binær ryggsekk og lengste enkle vei er NP-harde |
+| F | Tema | Algoritmer og stoff | Notater |
+|---|---|---|---|
+| 9 | Minimale spenntrær | Disjunkte mengder: Make-Set, Union, Link, Find-Set, Connected-Components, Same-Component. Generic-MST, MST-Kruskal, MST-Prim | [Kategori 8](8-minimale-spenntraer.md) |
+| 10 | Korteste vei fra én til alle | Relax og Initialize-Single-Source, Bellman-Ford, Dag-Shortest-Paths, Dijkstra | [Kategori 9](9-korteste-vei-en-til-alle.md) |
+| 11 | Korteste vei fra alle til alle | Floyd-Warshall, Transitive-Closure, Print-All-Pairs-Shortest-Path | [Kategori 10](10-korteste-vei-alle-til-alle.md) |
+| 12 | Maksimal flyt | Ford-Fulkerson-Method, Ford-Fulkerson, Edmonds-Karp. Bruke maks flyt til å finne minimalt snitt og maksimum bipartitt matching | [Kategori 11](11-maksimal-flyt.md) |
+| 13–14 | NP-kompletthet | Problemer og reduksjoner: CIRCUIT-SAT, SAT, 3-CNF-SAT, CLIQUE, VERTEX-COVER, HAM-CYCLE, TSP, SUBSET-SUM, og hvorfor binær ryggsekk og lengste enkle vei er NP-harde | [Kategori 12](12-np-kompletthet.md) |
 
 ## Fremdrift
 
@@ -35,8 +35,8 @@ Stoffet fra forelesning 2a/2b (hashtabeller, lenkede lister, tabelldobling, redu
 - [x] F6 Dynamisk programmering
 - [x] F7 Grådighet
 - [x] F8 Graftraversering
-- [ ] F9 Minimale spenntrær
-- [ ] F10 Korteste vei fra én til alle
-- [ ] F11 Korteste vei fra alle til alle
-- [ ] F12 Maksimal flyt
-- [ ] F13–14 NP-kompletthet
+- [x] F9 Minimale spenntrær
+- [x] F10 Korteste vei fra én til alle
+- [x] F11 Korteste vei fra alle til alle
+- [x] F12 Maksimal flyt
+- [x] F13–14 NP-kompletthet

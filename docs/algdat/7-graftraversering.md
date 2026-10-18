@@ -37,8 +37,8 @@ Hvilken node som tas ut, avgjør algoritmen:
 | --- | --- |
 | Eldste først (FIFO-kø) | BFS |
 | Nyeste først (LIFO-stakk) | DFS-Visit (samme oppførsel som rekursjonen) |
-| Lavest avstandsestimat v.d | Dijkstra (F10) |
-| Lettest kant til de besøkte nodene | MST-Prim (F9) |
+| Lavest avstandsestimat v.d | [Dijkstra](9-korteste-vei-en-til-alle.md#dijkstra-f10) (F10) |
+| Lettest kant til de besøkte nodene | [MST-Prim](8-minimale-spenntraer.md#mst-prim-f9) (F9) |
 
 Prioritetene oppdateres underveis. Andre prioriteringer gir andre algoritmer, som A\* (ikke pensum). Boka setter alle nodene i Q fra starten i Prim og Dijkstra, men ideen er den samme.
 

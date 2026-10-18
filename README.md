@@ -48,7 +48,7 @@ studiebasen/
 
 ## Interaktive figurer (AlgDat)
 
-Figurene i AlgDat er React-komponenter i `tools/algwidgets/widgets/*.jsx`. De er ferdig bygget til `docs/javascripts/algwidgets.js`, så du trenger ikke gjøre noe for å bruke dem. React ligger i `docs/javascripts/vendor/`, så figurene virker uten internett.
+Figurene i AlgDat er React-komponenter i `tools/algwidgets/widgets/*.jsx`. Felles byggeklosser (knapper, noder, kanter, matriser, pseudokode) ligger i `tools/algwidgets/lib.jsx`. De er ferdig bygget til `docs/javascripts/algwidgets.js`, så du trenger ikke gjøre noe for å bruke dem. React ligger i `docs/javascripts/vendor/`, så figurene virker uten internett.
 
 Endrer du en figur, bygg på nytt (krever Node.js):
 
