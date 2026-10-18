@@ -20,6 +20,13 @@ Forelesninger del I–V, tre gjesteforelesninger, eksamen 2021 og 2022.
 Algoritmene fra F1–F8 med læringsmål, bevis, kjøretid og 19 interaktive figurer.
 </div>
 
+<div markdown>
+<p class="kode">EXPH0300 · høst 2026</p>
+**[Ex.phil.](exphil/index.md)**
+
+Forelesningsplan F1–F12 og notater til de seks kompendietekstene om vitenskap, teknologi og bærekraft.
+</div>
+
 </div>
 
 ## Snarveier
@@ -28,3 +35,4 @@ Algoritmene fra F1–F8 med læringsmål, bevis, kjøretid og 19 interaktive fig
 - [Begreper](ttm4185/begreper.md): norsk og engelsk side om side
 - [Eksamen TTM4185](ttm4185/eksamen.md): oppgavetyper og hva som går igjen
 - [AlgDat-pensum](algdat/pensum.md): alle algoritmene per forelesning, med fremdrift
+- [Ex.phil.-begreper](exphil/begreper.md): alle sentrale begreper fra kompendiet

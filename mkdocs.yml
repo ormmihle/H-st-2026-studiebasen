@@ -92,4 +92,15 @@ nav:
           - "5. Dynamisk programmering": algdat/5-dynamisk-programmering.md
           - "6. Grådige algoritmer": algdat/6-gradige-algoritmer.md
           - "7. Graftraversering": algdat/7-graftraversering.md
+  - Ex.phil.:
+      - exphil/index.md
+      - "Vitenskap, teknologi og samfunn":
+          - "Briggle & Mitcham kap. 3": exphil/briggle-mitcham-kap-3.md
+          - "Briggle & Mitcham kap. 9": exphil/briggle-mitcham-kap-9.md
+          - "van de Poel & Royakkers": exphil/van-de-poel-royakkers.md
+      - Bærekraft:
+          - "Carson & Skauge": exphil/carson-skauge.md
+          - Hovi: exphil/hovi.md
+          - "Lavik & Pedersen": exphil/lavik-pedersen.md
+      - Begreper: exphil/begreper.md
   - Legg til fag: legg-til-fag.md

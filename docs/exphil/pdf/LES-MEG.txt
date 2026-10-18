@@ -1,0 +1,9 @@
+Legg tekstene for Ex.phil. (EXPH0300) i denne mappen med disse filnavnene,
+så virker lenkene på fagsiden. Mappen holdes utenfor Git.
+
+  Briggle_og_Mitcham_kap_3.pdf   Science and its norms
+  Briggle_og_Mitcham_kap_9.pdf   Science and politics I: Policy for science
+  van_de_Poel_og_Royakkers.pdf   The Responsibilities of Engineers
+  Carson_og_Skauge.pdf           Bærekraftige virksomheter (kap. 6)
+  Hovi_2001.pdf                  Føre var-prinsippet som rasjonelt beslutningskriterium
+  Lavik_og_Pedersen.txt          Artikkelen om Caney og Norges rettferdige klimaandel

@@ -37,6 +37,7 @@ studiebasen/
 │   ├── stylesheets/      # egne farger (risikomatrise, fagkort)
 │   ├── javascripts/      # oppsett for matteformler
 │   ├── algdat/           # Algoritmer og datastrukturer
+│   ├── exphil/           # Ex.phil. (EXPH0300)
 │   └── ttm4185/          # ett fag = én mappe
 │       ├── index.md
 │       ├── del-*.md      # forelesningsnotater
