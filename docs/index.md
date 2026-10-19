@@ -24,7 +24,7 @@ Hele pensum F1–F14 med læringsmål, bevis, kjøretid og 31 interaktive figure
 <p class="kode">EXPH0300 · høst 2026</p>
 **[Ex.phil.](exphil/index.md)**
 
-Forelesningsplan F1–F12 og notater til de seks kompendietekstene om vitenskap, teknologi og bærekraft.
+Forelesningsplan F1–F12 med notater til hele *Tenk!*-pensumet og de seks kompendietekstene, alle med repetisjonsspørsmål.
 </div>
 
 </div>
@@ -35,4 +35,4 @@ Forelesningsplan F1–F12 og notater til de seks kompendietekstene om vitenskap,
 - [Begreper](ttm4185/begreper.md): norsk og engelsk side om side
 - [Eksamen TTM4185](ttm4185/eksamen.md): oppgavetyper og hva som går igjen
 - [AlgDat-pensum](algdat/pensum.md): alle algoritmene per forelesning, med fremdrift
-- [Ex.phil.-begreper](exphil/begreper.md): alle sentrale begreper fra kompendiet
+- [Ex.phil.-begreper](exphil/begreper.md): alle sentrale begreper fra *Tenk!* og kompendiet

@@ -99,6 +99,14 @@ nav:
           - "12. NP-kompletthet": algdat/12-np-kompletthet.md
   - Ex.phil.:
       - exphil/index.md
+      - "Tenk!":
+          - "Del 1: Argumentasjon": exphil/tenk-1-argumentasjon.md
+          - "Del 2: Vitenskapelig tenkemåte": exphil/tenk-2-vitenskapelig-tenkemate.md
+          - "Kap. 8: Er vitenskapen verdifri?": exphil/tenk-3-verdifri.md
+          - "Kap. 12: Menneskesyn": exphil/tenk-4-menneskesyn.md
+          - "Kap. 13: Teknologi, menneske, samfunn": exphil/tenk-5-teknologi.md
+          - "Del 4: Normativ etikk": exphil/tenk-6-etikk.md
+          - "Del 5: Politisk filosofi": exphil/tenk-7-politisk-filosofi.md
       - "Vitenskap, teknologi og samfunn":
           - "Briggle & Mitcham kap. 3": exphil/briggle-mitcham-kap-3.md
           - "Briggle & Mitcham kap. 9": exphil/briggle-mitcham-kap-9.md
