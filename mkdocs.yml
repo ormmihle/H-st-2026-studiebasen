@@ -61,6 +61,7 @@ extra_javascript:
   - javascripts/vendor/react-dom.production.min.js
   - javascripts/algwidgets.js
   - javascripts/algwidgets-mount.js
+  - javascripts/eksamener.js
 
 # PDF-ene ligger lokalt og er holdt utenfor Git, så manglende PDF-er skal ikke gi advarsler
 validation:
@@ -69,6 +70,7 @@ validation:
 
 nav:
   - Forside: index.md
+  - Eksamener: eksamener.md
   - Sikkerhet og robusthet:
       - ttm4185/index.md
       - Forelesninger:

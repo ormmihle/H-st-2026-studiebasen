@@ -2,6 +2,17 @@
 
 Alt studiestoffet mitt på ett sted. Notatene er skrevet i Markdown, og MkDocs gjør dem om til denne siden. Bruk søkefeltet øverst for å søke på tvers av alle fag.
 
+## Eksamener
+
+<div class="eksamenskort" markdown>
+<div data-tid="2026-11-24T15:00" markdown><p class="kode">24.11 kl. 15:00</p>**TMA4432** Matematikk 4C<p class="nedtelling"></p></div>
+<div data-tid="2026-12-03T15:00" markdown><p class="kode">03.12 kl. 15:00</p>**[TTM4185](ttm4185/eksamen.md)** Sikkerhet og robusthet<p class="nedtelling"></p></div>
+<div data-tid="2026-12-07T09:00" markdown><p class="kode">07.12 kl. 09:00</p>**[EXPH0300](exphil/index.md)** Ex.phil.<p class="nedtelling"></p></div>
+<div data-tid="2026-12-09T15:00" markdown><p class="kode">09.12 kl. 15:00</p>**[TDT4120](algdat/pensum.md)** AlgDat<p class="nedtelling"></p></div>
+</div>
+
+Mer i [eksamensoversikten](eksamener.md).
+
 ## Fag
 
 <div class="fagkort" markdown>

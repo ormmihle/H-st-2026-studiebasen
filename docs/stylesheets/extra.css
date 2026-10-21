@@ -65,3 +65,20 @@
 .algwidget svg { display: block; width: 100%; min-width: 34rem; height: auto; font-family: var(--md-text-font-family); }
 .algwidget svg g[cursor="pointer"]:hover rect { stroke-width: 2.5; }
 .algwidget-caption { margin-top: 0 !important; font-size: .7rem; color: var(--md-default-fg-color--light); text-align: center; }
+
+/* Eksamensoversikt: kort med nedtelling */
+.eksamenskort { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .8rem; margin: 1rem 0; }
+.eksamenskort > div {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-top: 3px solid var(--md-default-fg-color--lighter);
+  border-radius: .3rem;
+  padding: .8rem 1rem;
+  display: flex; flex-direction: column;
+}
+.eksamenskort > div p { margin: .2rem 0; }
+.eksamenskort .kode { font-family: var(--md-code-font-family); font-size: .75rem; color: var(--md-default-fg-color--light); }
+.eksamenskort .nedtelling { margin-top: auto; padding-top: .5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.eksamenskort .nedtelling:empty { display: none; }
+.eksamenskort > div.neste { border-top-color: var(--md-primary-fg-color); }
+.eksamenskort > div.neste .nedtelling { color: var(--md-primary-fg-color); }
+.eksamenskort > div.ferdig { opacity: .55; }
