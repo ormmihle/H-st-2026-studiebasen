@@ -1,0 +1,12 @@
+{
+  "name": "piper-bundle",
+  "private": true,
+  "description": "Bygger den innebygde norske stemmen (Piper) til docs/javascripts/vendor/piper/",
+  "scripts": { "build": "node build.mjs" },
+  "dependencies": {
+    "@mintplex-labs/piper-tts-web": "1.0.5",
+    "onnxruntime-web": "1.18.0",
+    "@diffusionstudio/piper-wasm": "1.0.0"
+  },
+  "devDependencies": { "esbuild": "0.24.0" }
+}

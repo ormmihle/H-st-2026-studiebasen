@@ -1,14 +1,19 @@
-// Opplesning: en «Les opp»-knapp øverst på hver side som leser innholdet
-// med nettleserens innebygde talesyntese (Web Speech API). Ingen data sendes
-// noe sted av denne koden; stemmene kommer fra nettleseren og Windows.
+// Opplesning: en «Les opp»-knapp øverst på hver side.
 //
-// Siden leses avsnitt for avsnitt, og avsnittet som leses, markeres.
-// Opplesningen starter der du har blada til, eller ved tekst du har markert.
-// Klikk på et avsnitt mens opplesningen går for å hoppe dit.
+// To motorer:
+//  - «Norsk – innebygd»: Piper med en åpen norsk stemme (talesyntese, nb). Kjører helt lokalt i
+//    nettleseren. Stemmemodellen (ca. 60 MB) lastes ned fra Hugging Face første gang og lagres
+//    i nettleseren etterpå, så den virker uten nett senere. Resten ligger i javascripts/vendor/piper/.
+//  - Nettleserens egne stemmer (Web Speech API), for eksempel Edge sine norske stemmer.
+//
+// Siden leses avsnitt for avsnitt, og avsnittet som leses, markeres. Opplesningen starter der du
+// har blada til, eller ved tekst du har markert. Klikk på et avsnitt under opplesning for å hoppe dit.
 // Lukkede fasit-bokser, kode, formler og interaktive figurer hoppes over.
 (function () {
-  if (!("speechSynthesis" in window)) return;
-  var synth = window.speechSynthesis;
+  var synth = window.speechSynthesis || null;
+  var PIPER = "__piper";
+  var PIPER_STEMME = "no_NO-talesyntese-medium";
+  var VENDOR = new URL("javascripts/vendor/piper/", document.querySelector('script[src$="opplesning.js"]').src.replace(/javascripts\/opplesning\.js.*$/, "")).href;
 
   var LAGRING = "studiebasen-opplesning";
   var innst = { fart: 1, stemme: "" };
@@ -19,7 +24,9 @@
     ".algwidget, .headerlink, .md-button, .tts-verktoy, svg, .mermaid, .md-source-file";
   var BLOKK = { P: 1, H1: 1, H2: 1, H3: 1, H4: 1, H5: 1, H6: 1, TR: 1, SUMMARY: 1, DT: 1, DD: 1, FIGCAPTION: 1 };
 
-  var blokker = [], indeks = 0, status = "stopp", knapper = {}, aktivEl = null;
+  var blokker = [], indeks = 0, status = "stopp", ui = {}, aktivEl = null, generasjon = 0;
+
+  // ---------- Finne teksten ----------
 
   function tekstAv(el, utenBarn) {
     var kopi = el.cloneNode(true);
@@ -33,9 +40,7 @@
   }
 
   function skalHoppes(el) {
-    if (el.matches(HOPP_OVER)) return true;
-    if (el.tagName === "DETAILS" && !el.open) return true;
-    return false;
+    return el.matches(HOPP_OVER) || (el.tagName === "DETAILS" && !el.open);
   }
 
   function samle(rot) {
@@ -58,61 +63,7 @@
     });
   }
 
-  // Chrome stopper lange ytringer etter ca. 15 sekunder, så lange avsnitt deles i setninger.
-  function biter(tekst) {
-    var setninger = tekst.match(/[^.!?:;]+[.!?:;]*\s*/g) || [tekst];
-    var ut = [], cur = "";
-    setninger.forEach(function (s) {
-      if ((cur + s).length > 220 && cur) { ut.push(cur); cur = ""; }
-      cur += s;
-    });
-    if (cur.trim()) ut.push(cur);
-    return ut;
-  }
-
-  function norskeFørst(a, b) {
-    var na = /^(nb|no|nn)/i.test(a.lang) ? 0 : 1, nb = /^(nb|no|nn)/i.test(b.lang) ? 0 : 1;
-    if (na !== nb) return na - nb;
-    var ka = /natural|online/i.test(a.name) ? 0 : 1, kb = /natural|online/i.test(b.name) ? 0 : 1;
-    return ka - kb || a.name.localeCompare(b.name);
-  }
-
-  function valgtStemme() {
-    var stemmer = synth.getVoices();
-    return stemmer.find(function (v) { return v.name === innst.stemme; }) ||
-      stemmer.slice().sort(norskeFørst)[0] || null;
-  }
-
-  function marker(el) {
-    if (aktivEl) aktivEl.classList.remove("tts-aktiv");
-    aktivEl = el;
-    if (!el) return;
-    el.classList.add("tts-aktiv");
-    var r = el.getBoundingClientRect();
-    if (r.top < 80 || r.bottom > window.innerHeight - 40) el.scrollIntoView({ block: "center", behavior: "smooth" });
-  }
-
-  function lesFra(i) {
-    synth.cancel();
-    indeks = i;
-    if (indeks >= blokker.length) { stopp(); return; }
-    var blokk = blokker[indeks];
-    marker(blokk.el);
-    var deler = biter(blokk.tekst), stemme = valgtStemme(), denne = indeks;
-    deler.forEach(function (del, n) {
-      var u = new SpeechSynthesisUtterance(del);
-      if (stemme) { u.voice = stemme; u.lang = stemme.lang; } else { u.lang = "nb-NO"; }
-      u.rate = innst.fart;
-      if (n === deler.length - 1) {
-        u.onend = function () { if (status === "spiller" && indeks === denne) lesFra(denne + 1); };
-      }
-      synth.speak(u);
-    });
-    settStatus("spiller");
-  }
-
-  // Hvor skal opplesningen starte? 1) Ved markert tekst, hvis du har markert noe.
-  // 2) Ellers ved det første avsnittet som er synlig på skjermen, så du starter der du har blada til.
+  // Start ved markert tekst, ellers ved første avsnitt som er synlig på skjermen.
   function startpunkt() {
     var utvalg = window.getSelection && window.getSelection();
     if (utvalg && !utvalg.isCollapsed && utvalg.anchorNode) {
@@ -129,33 +80,178 @@
     return 0;
   }
 
+  function marker(el) {
+    if (aktivEl) aktivEl.classList.remove("tts-aktiv");
+    aktivEl = el;
+    if (!el) return;
+    el.classList.add("tts-aktiv");
+    var r = el.getBoundingClientRect();
+    if (r.top < 120 || r.bottom > window.innerHeight - 40) el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+
+  function melding(t) {
+    ui.melding.textContent = t || "";
+    ui.melding.hidden = !t;
+  }
+
+  // ---------- Motor 1: innebygd norsk stemme (Piper) ----------
+
+  var piper = {
+    lastet: null, sesjon: null, lyd: new Audio(), lager: {}, ko: Promise.resolve(),
+
+    last: function () {
+      if (this.lastet) return this.lastet;
+      this.lastet = new Promise(function (ok, feil) {
+        var s = document.createElement("script");
+        s.src = VENDOR + "piper.js";
+        s.onload = ok;
+        s.onerror = function () { feil(new Error("Fant ikke " + s.src)); };
+        document.head.appendChild(s);
+      }).then(function () {
+        return window.PiperTTS.TtsSession.create({
+          voiceId: PIPER_STEMME,
+          wasmPaths: { onnxWasm: VENDOR, piperWasm: VENDOR + "piper_phonemize.wasm", piperData: VENDOR + "piper_phonemize.data" },
+          progress: function (p) {
+            if (p && p.total && /\.onnx$/.test(p.url)) {
+              var pst = Math.round(p.loaded * 100 / p.total);
+              melding(pst < 100 ? "Laster ned den norske stemmen (ca. " + Math.round(p.total / 1048576) + " MB, bare første gang): " + pst + " %" : "Gjør klar stemmen …");
+            }
+          }
+        });
+      }).then(function (sesjon) { piper.sesjon = sesjon; return sesjon; });
+      this.lastet.catch(function () { piper.lastet = null; });
+      return this.lastet;
+    },
+
+    // Lager lyd for blokk i (én om gangen, i kø) og husker resultatet.
+    lag: function (i) {
+      if (i >= blokker.length) return Promise.resolve(null);
+      if (this.lager[i]) return this.lager[i];
+      var tekst = blokker[i].tekst, self = this;
+      var p = this.ko.then(function () { return self.last(); }).then(function (sesjon) { return sesjon.predict(tekst); })
+        .then(function (wav) { return URL.createObjectURL(wav); });
+      this.ko = p.catch(function () {});
+      this.lager[i] = p;
+      return p;
+    },
+
+    spill: function (i, gen) {
+      var self = this;
+      if (!this.sesjon) melding("Starter den norske stemmen …");
+      this.lag(i).then(function (url) {
+        if (gen !== generasjon) return;
+        melding("");
+        if (!url) { stopp(); return; }
+        self.lyd.src = url;
+        self.lyd.playbackRate = innst.fart;
+        self.lyd.onended = function () { if (gen === generasjon && status === "spiller") lesFra(i + 1); };
+        self.lyd.play();
+        self.lag(i + 1); // forbered neste avsnitt mens dette spilles
+      }).catch(function (e) {
+        if (gen !== generasjon) return;
+        console.error(e);
+        stopp();
+        melding("Klarte ikke å starte den norske stemmen. Første gang trengs internett for å laste den ned. (" + e.message + ")");
+      });
+    },
+    pause: function () { this.lyd.pause(); },
+    fortsett: function () { this.lyd.play(); },
+    stopp: function () {
+      this.lyd.pause();
+      this.lyd.onended = null;
+      var lager = this.lager;
+      Object.keys(lager).forEach(function (k) { lager[k].then(function (u) { if (u) URL.revokeObjectURL(u); }, function () {}); });
+      this.lager = {};
+    },
+    fart: function (f) { this.lyd.playbackRate = f; }
+  };
+
+  // ---------- Motor 2: nettleserens stemmer ----------
+
+  function biter(tekst) {
+    var setninger = tekst.match(/[^.!?:;]+[.!?:;]*\s*/g) || [tekst];
+    var ut = [], cur = "";
+    setninger.forEach(function (s) {
+      if ((cur + s).length > 220 && cur) { ut.push(cur); cur = ""; }
+      cur += s;
+    });
+    if (cur.trim()) ut.push(cur);
+    return ut;
+  }
+
+  var nettleser = {
+    stemme: function () {
+      return synth.getVoices().find(function (v) { return v.name === innst.stemme; }) || null;
+    },
+    spill: function (i, gen) {
+      synth.cancel();
+      var deler = biter(blokker[i].tekst), stemme = this.stemme();
+      deler.forEach(function (del, n) {
+        var u = new SpeechSynthesisUtterance(del);
+        if (stemme) { u.voice = stemme; u.lang = stemme.lang; } else { u.lang = "nb-NO"; }
+        u.rate = innst.fart;
+        if (n === deler.length - 1) u.onend = function () { if (gen === generasjon && status === "spiller") lesFra(i + 1); };
+        synth.speak(u);
+      });
+    },
+    pause: function () { synth.pause(); },
+    fortsett: function () { synth.resume(); },
+    stopp: function () { synth.cancel(); },
+    fart: function () { if (status === "spiller") lesFra(indeks); }
+  };
+
+  // Nettleserstemme bare hvis du har valgt en som faktisk finnes; ellers innebygd norsk.
+  function motor() { return synth && innst.stemme && innst.stemme !== PIPER && nettleser.stemme() ? nettleser : piper; }
+
+  // ---------- Styring ----------
+
+  function lesFra(i) {
+    piper.lyd.pause();
+    if (synth) synth.cancel();
+    generasjon++;
+    indeks = i;
+    if (indeks >= blokker.length) { stopp(); return; }
+    marker(blokker[indeks].el);
+    settStatus("spiller");
+    motor().spill(indeks, generasjon);
+  }
+
   function stopp() {
-    synth.cancel();
+    generasjon++;
+    piper.stopp();
+    if (synth) synth.cancel();
     marker(null);
     settStatus("stopp");
   }
 
   function settStatus(s) {
     status = s;
-    knapper.spill.textContent = s === "spiller" ? "⏸ Pause" : s === "pause" ? "▶ Fortsett" : "▶ Les opp";
-    knapper.spill.setAttribute("aria-pressed", s === "spiller" ? "true" : "false");
-    knapper.stopp.hidden = s === "stopp";
+    ui.spill.textContent = s === "spiller" ? "⏸ Pause" : s === "pause" ? "▶ Fortsett" : "▶ Les opp";
+    ui.spill.setAttribute("aria-pressed", s === "spiller" ? "true" : "false");
+    ui.stopp.hidden = s === "stopp";
     document.body.classList.toggle("tts-pa", s !== "stopp");
   }
 
-  function fyllStemmer(velg) {
-    var stemmer = synth.getVoices().slice().sort(norskeFørst);
-    velg.innerHTML = "";
+  function erNorsk(v) { return /^(nb|no|nn)/i.test(v.lang); }
+
+  function fyllStemmer() {
+    var velg = ui.stemme;
+    var stemmer = synth ? synth.getVoices().slice() : [];
+    stemmer.sort(function (a, b) {
+      return (erNorsk(a) ? 0 : 1) - (erNorsk(b) ? 0 : 1) ||
+        (/natural|online/i.test(a.name) ? 0 : 1) - (/natural|online/i.test(b.name) ? 0 : 1) ||
+        a.name.localeCompare(b.name);
+    });
+    velg.innerHTML = '<option value="' + PIPER + '">Norsk – innebygd</option>';
     stemmer.forEach(function (v) {
       var o = document.createElement("option");
       o.value = v.name;
       o.textContent = v.name.replace(/^Microsoft /, "") + " (" + v.lang + ")";
       velg.appendChild(o);
     });
-    var valgt = valgtStemme();
-    if (valgt) velg.value = valgt.name;
-    var harNorsk = stemmer.some(function (v) { return /^(nb|no|nn)/i.test(v.lang); });
-    knapper.tips.hidden = harNorsk || !stemmer.length;
+    // Standard: innebygd norsk, med mindre du har valgt en annen stemme som finnes.
+    var finnes = stemmer.some(function (v) { return v.name === innst.stemme; });
+    velg.value = finnes ? innst.stemme : PIPER;
   }
 
   function lagVerktoy() {
@@ -172,35 +268,37 @@
       [0.8, 1, 1.2, 1.4, 1.7, 2].map(function (f) { return '<option value="' + f + '">' + String(f).replace(".", ",") + "×</option>"; }).join("") +
       "</select></label>" +
       '<label>Stemme <select class="tts-stemme"></select></label>' +
-      '<p class="tts-tips" hidden>Fant ingen norsk stemme. I Windows: Innstillinger → Tid og språk → Tale → Legg til stemmer → Norsk (bokmål). Microsoft Edge har også egne, naturlige norske stemmer.</p>';
+      '<p class="tts-melding" hidden></p>';
     h1.insertAdjacentElement("afterend", boks);
 
-    knapper.spill = boks.querySelector(".tts-spill");
-    knapper.stopp = boks.querySelector(".tts-stopp");
-    knapper.tips = boks.querySelector(".tts-tips");
-    var fart = boks.querySelector(".tts-fart"), stemmeValg = boks.querySelector(".tts-stemme");
+    ui.spill = boks.querySelector(".tts-spill");
+    ui.stopp = boks.querySelector(".tts-stopp");
+    ui.melding = boks.querySelector(".tts-melding");
+    ui.stemme = boks.querySelector(".tts-stemme");
+    var fart = boks.querySelector(".tts-fart");
     fart.value = String(innst.fart);
 
-    knapper.spill.addEventListener("click", function () {
-      if (status === "spiller") { synth.pause(); settStatus("pause"); }
-      else if (status === "pause") { synth.resume(); settStatus("spiller"); }
+    ui.spill.addEventListener("click", function () {
+      if (status === "spiller") { motor().pause(); settStatus("pause"); }
+      else if (status === "pause") { motor().fortsett(); settStatus("spiller"); }
       else {
         blokker = [];
         samle(artikkel);
         lesFra(startpunkt());
       }
     });
-    knapper.stopp.addEventListener("click", stopp);
+    ui.stopp.addEventListener("click", function () { stopp(); melding(""); });
     fart.addEventListener("change", function () {
       innst.fart = parseFloat(fart.value); lagre();
-      if (status === "spiller") lesFra(indeks);
+      motor().fart(innst.fart);
     });
-    stemmeValg.addEventListener("change", function () {
-      innst.stemme = stemmeValg.value; lagre();
-      if (status === "spiller") lesFra(indeks);
+    ui.stemme.addEventListener("change", function () {
+      var spilte = status !== "stopp";
+      stopp();
+      innst.stemme = ui.stemme.value; lagre();
+      if (spilte) { blokker = []; samle(artikkel); lesFra(Math.min(indeks, blokker.length - 1)); }
     });
 
-    // Klikk på et avsnitt under opplesning for å hoppe dit.
     artikkel.addEventListener("click", function (e) {
       if (status === "stopp" || e.target.closest("a, button, select, summary, .tts-verktoy")) return;
       for (var i = 0; i < blokker.length; i++) {
@@ -208,9 +306,9 @@
       }
     });
 
-    fyllStemmer(stemmeValg);
-    synth.addEventListener("voiceschanged", function () { fyllStemmer(stemmeValg); });
-    window.addEventListener("beforeunload", function () { synth.cancel(); });
+    fyllStemmer();
+    if (synth) synth.addEventListener("voiceschanged", fyllStemmer);
+    window.addEventListener("beforeunload", function () { if (synth) synth.cancel(); });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", lagVerktoy);
