@@ -84,7 +84,8 @@
 .eksamenskort > div.ferdig { opacity: .55; }
 
 /* Opplesning (text-to-speech) */
-.tts-verktoy { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; margin: -.4rem 0 1.2rem; font-size: .7rem; }
+.tts-verktoy { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; margin: -.4rem 0 1.2rem; font-size: .7rem;
+  position: sticky; top: 2.4rem; z-index: 2; padding: .4rem 0; background: var(--md-default-bg-color); }
 .tts-verktoy .md-button { margin: 0; padding: .3em 1em; font-size: .7rem; }
 .tts-verktoy label { display: inline-flex; align-items: center; gap: .3rem; color: var(--md-default-fg-color--light); }
 .tts-verktoy select { font: inherit; color: var(--md-default-fg-color); background: var(--md-default-bg-color); border: 1px solid var(--md-default-fg-color--lightest); border-radius: .2rem; padding: .15rem .3rem; max-width: 14rem; }

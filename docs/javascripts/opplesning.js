@@ -3,6 +3,7 @@
 // noe sted av denne koden; stemmene kommer fra nettleseren og Windows.
 //
 // Siden leses avsnitt for avsnitt, og avsnittet som leses, markeres.
+// Opplesningen starter der du har blada til, eller ved tekst du har markert.
 // Klikk på et avsnitt mens opplesningen går for å hoppe dit.
 // Lukkede fasit-bokser, kode, formler og interaktive figurer hoppes over.
 (function () {
@@ -110,6 +111,24 @@
     settStatus("spiller");
   }
 
+  // Hvor skal opplesningen starte? 1) Ved markert tekst, hvis du har markert noe.
+  // 2) Ellers ved det første avsnittet som er synlig på skjermen, så du starter der du har blada til.
+  function startpunkt() {
+    var utvalg = window.getSelection && window.getSelection();
+    if (utvalg && !utvalg.isCollapsed && utvalg.anchorNode) {
+      var node = utvalg.anchorNode.nodeType === 1 ? utvalg.anchorNode : utvalg.anchorNode.parentElement;
+      for (var i = 0; i < blokker.length; i++) {
+        if (blokker[i].el.contains(node)) { utvalg.removeAllRanges(); return i; }
+      }
+    }
+    if (window.scrollY < 50) return 0;
+    var topp = (document.querySelector(".md-header") || { offsetHeight: 0 }).offsetHeight + 10;
+    for (var j = 0; j < blokker.length; j++) {
+      if (blokker[j].el.getBoundingClientRect().bottom > topp) return j;
+    }
+    return 0;
+  }
+
   function stopp() {
     synth.cancel();
     marker(null);
@@ -168,7 +187,7 @@
       else {
         blokker = [];
         samle(artikkel);
-        lesFra(0);
+        lesFra(startpunkt());
       }
     });
     knapper.stopp.addEventListener("click", stopp);
