@@ -62,6 +62,7 @@ extra_javascript:
   - javascripts/algwidgets.js
   - javascripts/algwidgets-mount.js
   - javascripts/eksamener.js
+  - javascripts/opplesning.js
 
 # PDF-ene ligger lokalt og er holdt utenfor Git, så manglende PDF-er skal ikke gi advarsler
 validation:

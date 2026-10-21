@@ -82,3 +82,13 @@
 .eksamenskort > div.neste { border-top-color: var(--md-primary-fg-color); }
 .eksamenskort > div.neste .nedtelling { color: var(--md-primary-fg-color); }
 .eksamenskort > div.ferdig { opacity: .55; }
+
+/* Opplesning (text-to-speech) */
+.tts-verktoy { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; margin: -.4rem 0 1.2rem; font-size: .7rem; }
+.tts-verktoy .md-button { margin: 0; padding: .3em 1em; font-size: .7rem; }
+.tts-verktoy label { display: inline-flex; align-items: center; gap: .3rem; color: var(--md-default-fg-color--light); }
+.tts-verktoy select { font: inherit; color: var(--md-default-fg-color); background: var(--md-default-bg-color); border: 1px solid var(--md-default-fg-color--lightest); border-radius: .2rem; padding: .15rem .3rem; max-width: 14rem; }
+.tts-verktoy .tts-tips { flex-basis: 100%; margin: 0; color: var(--md-default-fg-color--light); }
+.tts-aktiv { background: color-mix(in srgb, var(--md-primary-fg-color) 14%, transparent); border-radius: .2rem; box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--md-primary-fg-color) 14%, transparent); transition: background .2s; }
+.tts-pa .md-content__inner p, .tts-pa .md-content__inner li, .tts-pa .md-content__inner tr { cursor: pointer; }
+@media print { .tts-verktoy { display: none; } }
