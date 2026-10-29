@@ -19,7 +19,7 @@ nav:
 6. Legg til et fagkort på [forsiden](index.md).
 
 !!! tip "Se endringene mens du skriver"
-    Kjør `mkdocs serve` i prosjektmappen og åpne <http://127.0.0.1:8000>. Siden oppdateres hver gang du lagrer en fil.
+    Start siden med `start.py` og la vinduet stå åpent. Siden oppdateres hver gang du lagrer en fil. Adressen står i vinduet, vanligvis <http://127.0.0.1:8765>.
 
 ## Nyttig Markdown
 
