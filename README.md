@@ -4,3 +4,5 @@ Mine studienotater som en lokal nettside, bygget med [MkDocs](https://www.mkdocs
 
 ## Kom i gang
 Krever [Python](https://www.python.org/downloads/). Clone repoet, og så kjører du start.py filen. Dette kan gjøres gjennom terminalen ved å skrive `py start.py`, eller å dobbelklikke filen i filutforskeren.
+
+Se [LEGG-TIL-FAG.md](LEGG-TIL-FAG.md) for hvordan du legger til et nytt fag.

@@ -15,9 +15,6 @@ Emnet handler om hvordan IKT-systemer kan beskyttes mot både angrep og vanlige 
 | IV | Trusler og trender: sårbarheter, angrep og trusselaktører (Telenor Cyberdefence) | [Notater](del-4-trusler-og-trender.md) | [PDF](pdf/2026-Telenor%20Cyberpdf.pdf) |
 | V | Risikostyring, risikovurdering, SLA og tjenesteutsetting | [Notater](del-5-risikostyring.md) | [PDF](pdf/2026_lectures_part_V%20Risk%20management.pdf) |
 
-!!! note "Mottiltak og kryptografi"
-    Del V viser til en egen forelesning om *mottiltak* (countermeasures), og eksamen 2021 spør mye om kryptografi og nøkkelhåndtering. Ingen av de opplastede filene dekker dette, så legg til notater når du har materialet.
-
 ## Gjesteforelesninger
 
 | Dato | Foreleser | Tema | PDF |
@@ -46,6 +43,3 @@ Oversikt over hva som går igjen: [Eksamen](eksamen.md).
 - **Meld. St. 28 (2020–2021)** *Vår felles digitale grunnmur*, del III kapittel 12–14
 - **Jøsang**, *Cybersikkerhet* (3. utg., 2026), kapittelet om risikostyring
 - **Refsdal, Solhaug og Stølen**, *Cyber-Risk Management* (Springer 2015)
-
-!!! note "PDF-ene"
-    PDF-lenkene virker når filene ligger i mappen `docs/ttm4185/pdf/` med de samme filnavnene. Mappen er holdt utenfor Git.

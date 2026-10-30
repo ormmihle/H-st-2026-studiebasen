@@ -2,9 +2,6 @@
 
 Alle algoritmene i pensumheftet, forklart opp mot læringsmålene, med pseudokode, korrekthetsbevis, kjøretid og en interaktiv figur du kan bla gjennom steg for steg. Pensum er Cormen mfl., *Introduction to Algorithms* (4. utg.), pluss pensumheftets appendikser.
 
-!!! abstract "Status"
-    Hele pensum, forelesning 1–14, er gjennomgått i tolv kategorier med 31 interaktive figurer.
-
 ## Kategorier
 
 | # | Kategori | Algoritmer | Forelesning |
@@ -51,6 +48,3 @@ Se [Pensum og forelesninger](pensum.md) for hele listen over algoritmer per fore
 | Boka (Cormen mfl., 4. utg.) | [AlgDat.pdf](pdf/AlgDat.pdf) |
 | Pensumheftet | [Pensumhefte.pdf](pdf/Pensumhefte.pdf) |
 | Lysark F9 (kortversjon) | [forelesn09_kort.pdf](pdf/forelesn09_kort.pdf) |
-
-!!! note "PDF-ene"
-    Legg PDF-ene i mappen `docs/algdat/pdf/` med navnene over, så virker lenkene. Mappen holdes utenfor Git.

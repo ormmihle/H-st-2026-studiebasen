@@ -8,7 +8,7 @@ Alle fire eksamenene er digitale i Inspera assessment og varer 4 timer. Møt opp
 <p class="kode">TMA4432 · tir. 24.11 kl. 15:00</p>
 **Matematikk 4C**
 
-Integraltransformer, funksjonsapproksimasjon og partielle differensialligninger. Ingen notater her ennå.
+Integraltransformer, funksjonsapproksimasjon og partielle differensialligninger.
 
 <p class="nedtelling"></p>
 </div>
@@ -55,8 +55,5 @@ Gå gjennom [pensumlista](algdat/pensum.md) med fremdriftsmåleren.
 
 !!! tip "Planlegging"
     Det er bare to dager mellom Ex.phil. og AlgDat, og fire mellom TTM4185 og Ex.phil. Det lønner seg å repetere AlgDat og Ex.phil. jevnlig i november, slik at de siste dagene før disse eksamenene kan brukes til finpuss.
-
-!!! note "Kandidatnummer"
-    Kandidatnumrene står ikke her, fordi repoet er offentlig og kandidatnummeret skal holde besvarelsen anonym. Du finner dem på Studentweb.
 
 Eksamenstidene er hentet fra Studentweb. Sjekk der eller på Innsida før eksamen i tilfelle endringer.

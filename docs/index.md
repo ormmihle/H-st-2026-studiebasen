@@ -1,6 +1,6 @@
 # Studiebasen
 
-Alt studiestoffet mitt på ett sted. Notatene er skrevet i Markdown, og MkDocs gjør dem om til denne siden. Bruk søkefeltet øverst for å søke på tvers av alle fag.
+Alt studiestoffet mitt på ett sted. Bruk søkefeltet øverst for å søke på tvers av alle fag.
 
 ## Eksamener
 
@@ -25,7 +25,7 @@ Forelesninger del I–V, tre gjesteforelesninger, eksamen 2021 og 2022.
 </div>
 
 <div markdown>
-<p class="kode">AlgDat · høst 2026</p>
+<p class="kode">TDT4120 · høst 2026</p>
 **[Algoritmer og datastrukturer](algdat/index.md)**
 
 Hele pensum F1–F14 med læringsmål, bevis, kjøretid og 31 interaktive figurer.

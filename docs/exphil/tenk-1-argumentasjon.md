@@ -8,7 +8,7 @@
 2. **Kapittel 2 (analyse):** hvordan du finner ut hva noen egentlig argumenterer for, hvilke grunner de gir, og hvordan grunnene henger sammen. Resultatet tegnes som et argumentasjonsdiagram.
 3. **Kapittel 3 (vurdering):** hvordan du avgjør om argumentene holder: er de *riktige*, og hvor *relevante* er de?
 
-Rekkefølgen er viktig: du må **analysere** før du kan **vurdere**. Eksemplene på denne siden er hentet fra boka og gjenfortalt med egne ord, så du kjenner dem igjen når du leser kapitlene.
+Rekkefølgen er viktig: du må **analysere** før du kan **vurdere**. Eksemplene er hentet fra boka, så du kjenner dem igjen når du leser kapitlene.
 
 !!! info "Hvordan diagrammene leses"
     Standpunktet står **øverst** (gult). Argumenter (grønne) peker oppover mot påstanden de støtter. Motargumenter er brune. Når flere påstander møtes i en liten grå prikk før pilen, utgjør de **ett sammensatt argument**: de gir én grunn sammen, ikke hver for seg. Stiplet kant betyr at påstanden er implisitt.

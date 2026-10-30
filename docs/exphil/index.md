@@ -2,9 +2,6 @@
 
 Examen philosophicum for naturvitenskap og teknologi, høst 2026. Hovedboka er **Tenk!**, i tillegg kommer seks artikler og bokkapitler som ligger i kompendiet.
 
-!!! info "Hva som finnes her"
-    Notater til hele *Tenk!*-pensumet og alle de seks kompendietekstene, med repetisjonsspørsmål og fasit på hver side. Alle forelesningene F1–F12 har notater.
-
 ## Forelesningsplan
 
 | | Uke | Tema | Pensum | Notater |
@@ -36,7 +33,7 @@ Examen philosophicum for naturvitenskap og teknologi, høst 2026. Hovedboka er *
     | [Del 4: Normativ etikk](tenk-6-etikk.md), kap. 15–18 | Utilitarisme (Bentham, Mill, Singer), Kants kategoriske imperativ, dydsetikk (Aristoteles, fronesis, eudaimonia) | F8–F9 |
     | [Del 5: Politisk filosofi](tenk-7-politisk-filosofi.md), kap. 19–21 | Mills skadeprinsipp, naturlige rettigheter og ikke-dominans, feminisme, Taylors forskjellspolitikk, Nussbaums kapabiliteter | F11–F12 |
 
-    PDF: [Tenk.pdf](pdf/Tenk.pdf) (holdes utenfor Git)
+    PDF: [Tenk.pdf](pdf/Tenk.pdf)
 
 === "Vitenskap, teknologi og samfunn (F5–F6)"
 

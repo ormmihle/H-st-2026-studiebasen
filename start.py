@@ -4,18 +4,19 @@ Kjør med dobbeltklikk, eller fra terminalen: py start.py (Windows) / python3 st
 
 Skriptet gjør fire ting:
   1. lager et eget Python-miljø i mappen .venv første gang, så Studiebasen ikke deler
-     pakker med andre prosjekter på maskinen,
+     pakker med andre prosjekter på maskinen. Er Python-versjonen for ny for MkDocs
+     (3.15 eller nyere), brukes en eldre versjon via py-launcheren hvis du har den,
   2. installerer MkDocs fra requirements.txt i det miljøet hvis det mangler,
   3. finner en ledig port (helst 8765), så siden ikke kolliderer med andre lokale servere,
   4. åpner nettleseren og starter nettsiden med «mkdocs serve».
 """
 
 import os
+import shutil
 import socket
 import subprocess
 import sys
 import threading
-import venv
 import webbrowser
 from pathlib import Path
 
@@ -23,6 +24,8 @@ MAPPE = Path(__file__).resolve().parent
 MILJO = MAPPE / ".venv"
 VERT = "127.0.0.1"
 FORETRUKKET_PORT = 8765  # egen port, så Studiebasen ikke kolliderer med andre prosjekter på 8000
+# PyYAML (som MkDocs trenger) har ennå ikke ferdigbygde pakker for Python 3.15 på Windows.
+NYESTE_STOTTEDE = (3, 14)
 
 
 def miljo_python() -> Path:
@@ -40,11 +43,48 @@ def har_mkdocs(python: Path) -> bool:
     return sjekk.returncode == 0
 
 
+def versjon(python: list[str]) -> tuple[int, int] | None:
+    svar = subprocess.run(
+        [*python, "-c", "import sys; print(sys.version_info[0], sys.version_info[1])"],
+        capture_output=True,
+        text=True,
+    )
+    if svar.returncode != 0:
+        return None
+    hoved, minor = svar.stdout.split()
+    return int(hoved), int(minor)
+
+
+def python_for_miljo() -> list[str]:
+    """Python-en som .venv skal lages med: den som kjører skriptet, eller en eldre via py-launcheren."""
+    if sys.version_info[:2] <= NYESTE_STOTTEDE:
+        return [sys.executable]
+    if os.name == "nt" and shutil.which("py"):
+        for minor in range(NYESTE_STOTTEDE[1], 9, -1):
+            kandidat = ["py", f"-3.{minor}"]
+            if versjon(kandidat) == (3, minor):
+                print(f"Python {sys.version_info[0]}.{sys.version_info[1]} er for ny for MkDocs, så Studiebasen bruker Python 3.{minor}.")
+                return kandidat
+    print(
+        f"Python {sys.version_info[0]}.{sys.version_info[1]} er trolig for ny for MkDocs. "
+        "Installer Python 3.14 fra python.org hvis installasjonen feiler."
+    )
+    return [sys.executable]
+
+
 def klargjor_miljo() -> Path | None:
     python = miljo_python()
+    onsket = python_for_miljo()
+    har, vil_ha = (versjon([str(python)]) if python.exists() else None), versjon(onsket)
+    if har and vil_ha and har != vil_ha:
+        print("Studiebasens Python-miljø (.venv) har feil Python-versjon, så det lages på nytt...")
+        shutil.rmtree(MILJO)
     if not python.exists():
         print("Lager et eget Python-miljø for Studiebasen (.venv). Dette skjer bare første gang...")
-        venv.create(MILJO, with_pip=True)
+        laget = subprocess.run([*onsket, "-m", "venv", str(MILJO)])
+        if laget.returncode != 0 or not python.exists():
+            print("Klarte ikke å lage Python-miljøet. Se feilmeldingen over.")
+            return None
     if not har_mkdocs(python):
         print("Installerer MkDocs i Studiebasens eget miljø. Dette tar et minutt...")
         installert = subprocess.run(

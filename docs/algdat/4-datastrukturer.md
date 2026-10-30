@@ -1,7 +1,7 @@
 # 4. Datastrukturer
 
 
-Begge datastrukturene i F5 er rotfaste trær. En haug holder bare orden langs stiene fra roten (alt er mindre enn roten), og gir rask tilgang til det største elementet. Et binært søketre holder orden mellom venstre og høyre deltre, og støtter søk og sortert gjennomgang. Disjunkte mengder (F9) kommer senere.
+Begge datastrukturene i F5 er rotfaste trær. En haug holder bare orden langs stiene fra roten (alt er mindre enn roten), og gir rask tilgang til det største elementet. Et binært søketre holder orden mellom venstre og høyre deltre, og støtter søk og sortert gjennomgang. Disjunkte mengder (F9) står sammen med spenntrærne i [kategori 8](8-minimale-spenntraer.md).
 
 ## Hauger, prioritetskøer og Heapsort (F5)
 
