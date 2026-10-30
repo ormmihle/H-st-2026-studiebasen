@@ -64,10 +64,10 @@ extra_javascript:
   - javascripts/eksamener.js
   - javascripts/opplesning.js
 
-# PDF-ene ligger lokalt og er holdt utenfor Git, så manglende PDF-er skal ikke gi advarsler
+# PDF-ene ligger lokalt og er holdt utenfor Git, så manglende PDF-er skal ikke gi meldinger
 validation:
   links:
-    not_found: info
+    not_found: ignore
 
 nav:
   - Forside: index.md

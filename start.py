@@ -129,6 +129,8 @@ def main() -> int:
         return subprocess.run(
             [str(python), "-m", "mkdocs", "serve", "-a", f"{VERT}:{port}"],
             cwd=MAPPE,
+            # Skjul Material-temaets advarsel om MkDocs 2.0; requirements.txt låser MkDocs under 2.
+            env={**os.environ, "NO_MKDOCS_2_WARNING": "1"},
         ).returncode
     except KeyboardInterrupt:
         return 0
