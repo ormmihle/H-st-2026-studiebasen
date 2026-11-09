@@ -53,6 +53,9 @@ Examen philosophicum for naturvitenskap og teknologi, høst 2026. Hovedboka er *
 
 Se også [Begreper](begreper.md) for alle sentrale begreper samlet.
 
+!!! tip "Eksamensøving"
+    [Studiespørsmål med eksempelsvar](studiesporsmal.md) har eksempelsvar på alle de offisielle studiespørsmålene, i samme rekkefølge som forelesningene, fra argumentasjon til politisk filosofi.
+
 ## Røde tråder
 
 Tekstene henger sammen, og eksamensoppgaver spør ofte om forbindelsene:
